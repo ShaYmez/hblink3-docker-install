@@ -59,7 +59,7 @@ DEP="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev sed car
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
 HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
 echo "------------------------------------------------------------------------------"
-echo " Installing required software..."
+echo " Installing required software....."
 echo "------------------------------------------------------------------------------"
 sleep 2
 apt-get install -y $DEP
@@ -107,7 +107,7 @@ sleep 2
         fi
 echo "Done."
 echo "------------------------------------------------------------------------------"
-echo "Downloading and installing HBMonv2 Dashboard"
+echo "Downloading and installing HBMonv2 Dashboard....."
 echo "------------------------------------------------------------------------------"
 sleep 2
 cd /opt/
@@ -118,32 +118,65 @@ git clone $HBGITMONREPO
 cd $HBMONDIR
 if [ -e monitor.py ]
 then
-        echo "------------------------------------------------------------------------------"
+        echo "--------------------------------------------------------------------------------"
         echo "It looks like HBMonitor installed correctly. The installation will now proceed. "
-        echo "------------------------------------------------------------------------------"
+        echo "--------------------------------------------------------------------------------"
         else
-        echo "------------------------------------------------------------------------------"
+        echo "-------------------------------------------------------------------------------------------"
         echo "I dont see HBMonitor installed! Please check your configuration and try again. Exiting....."
-        echo "------------------------------------------------------------------------------"
+        echo "-------------------------------------------------------------------------------------------"
         exit 0
 fi
 echo "Done."
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Install HBmonitor configuration"
+echo "Installing HBMonv2 configuration....."
 echo "------------------------------------------------------------------------------"
 sleep 2
                 pip3 install setuptools wheel
                 pip3 install -r requirements.txt
-                cp config_SAMPLE.py config.py
+        echo Install /opt/HBMonv2/config.py ...
+cat << EOF > /opt/HBMonv2/config.py
+CONFIG_INC      = True                           # Include HBlink stats
+HOMEBREW_INC    = True                           # Display Homebrew Peers status
+LASTHEARD_INC   = True                           # Display lastheard table on main page
+BRIDGES_INC     = False                          # Display Bridge status and button
+EMPTY_MASTERS   = False                          # Display Enable (True) or DISABLE (False) empty masters in status
+#
+HBLINK_IP       = '127.0.0.1'                    # HBlink's IP Address
+HBLINK_PORT     = 4321                           # HBlink's TCP reporting socket
+FREQUENCY       = 10                             # Frequency to push updates to web clients
+CLIENT_TIMEOUT  = 0                              # Clients are timed out after this many seconds, 0 to disable
+
+# Generally you don't need to use this but
+# if you don't want to show in lastherad received traffic from OBP link put NETWORK ID 
+# for example: "260210,260211,260212"
+OPB_FILTER = ""
+
+# Files and stuff for loading alias files for mapping numbers to names
+PATH            = './'                           # MUST END IN '/'
+PEER_FILE       = 'peer_ids.json'                # Will auto-download 
+SUBSCRIBER_FILE = 'subscriber_ids.json'          # Will auto-download 
+TGID_FILE       = 'talkgroup_ids.json'           # User provided
+LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # User provided (optional, leave '' if you don't use it)
+LOCAL_PEER_FILE = 'local_peer_ids.json'          # User provided (optional, leave '' if you don't use it)
+LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # User provided (optional, leave '' if you don't use it)
+FILE_RELOAD     = 15                             # Number of days before we reload DMR-MARC database files
+PEER_URL        = 'https://database.radioid.net/static/rptrs.json'
+SUBSCRIBER_URL  = 'https://database.radioid.net/static/users.json'
+
+# Settings for log files
+LOG_PATH        = '/var/log/hblink/'             # MUST END IN '/'
+LOG_NAME        = 'hblink.log'
+EOF
                 cp utils/hbmon.service /lib/systemd/system/
                 cp utils/lastheard /etc/cron.daily/
                 chmod +x /etc/cron.daily/lastheard
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Install HBMonv2 Dashboard"
+echo "Installing HBMonv2 HTML Dashboard....."
 echo "------------------------------------------------------------------------------"
 sleep 2
                 cd /var/www/html/
@@ -151,27 +184,19 @@ sleep 2
                 cp -a /opt/HBMonv2/html/. /var/www/html/
 if [ -e info.php ]
 then
-        echo "------------------------------------------------------------------------------"
+        echo "------------------------------------------------------------------------------------"
         echo "It looks like the dashboard installed correctly. The installation will now proceed. "
-        echo "------------------------------------------------------------------------------"
+        echo "------------------------------------------------------------------------------------"
         else
-        echo "------------------------------------------------------------------------------"
+        echo "-----------------------------------------------------------------------------------------------"
         echo "I dont see the dashboard installed! Please check your configuration and try again. Exiting....."
-        echo "------------------------------------------------------------------------------"
+        echo "-----------------------------------------------------------------------------------------------"
         exit 0
 fi
-echo ""
-echo ""
-echo "------------------------------------------------------------------------------"
-echo "Edit your config for HBmonitor..... "CTRL-X" TO EXIT"
-echo "------------------------------------------------------------------------------"
-        nano /opt/HBMonv2/config.py
-echo "Saved!"
+echo "Done."
 sleep 2
-echo ""
-echo ""
 echo "------------------------------------------------------------------------------"
-echo "Install HBlink3 folders"
+echo "InstallING HBlink3 configuration dirs....."
 echo "------------------------------------------------------------------------------"
 sleep 2
          echo Restart docker...
@@ -180,7 +205,7 @@ sleep 2
 
          echo Make config directory...
          mkdir /etc/hblink3
-         chmod 755 /etc/hblink3
+         chmod 0755 /etc/hblink3
 
          echo make json directory...
          mkdir -p /etc/hblink3/json/
@@ -195,7 +220,7 @@ echo "Done"
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Install HBlink3 config"
+echo "Installing HBlink3 configuration file....."
 echo "------------------------------------------------------------------------------"
 sleep 2
         echo Install /etc/hblink3/hblink.cfg ... 
@@ -248,7 +273,6 @@ SUB_ACL: DENY:1
 TGID_TS1_ACL: PERMIT:ALL
 TGID_TS2_ACL: PERMIT:ALL
 
-
 # NOT YET WORKING: NETWORK REPORTING CONFIGURATION
 #   Enabling "REPORT" will configure a socket-based reporting
 #   system that will send the configuration and other items
@@ -268,7 +292,6 @@ REPORT_INTERVAL: 60
 REPORT_PORT: 4321
 REPORT_CLIENTS: 127.0.0.1
 
-
 # SYSTEM LOGGER CONFIGURAITON
 #   This allows the logger to be configured without chaning the individual
 #   python logger stuff. LOG_FILE should be a complete path/filename for *your*
@@ -286,7 +309,7 @@ REPORT_CLIENTS: 127.0.0.1
 #   used.
 #
 [LOGGER]
-LOG_FILE: /tmp/hblink.log
+LOG_FILE: hblink.log
 LOG_HANDLERS: console-timed
 LOG_LEVEL: DEBUG
 LOG_NAME: HBlink
@@ -305,7 +328,7 @@ SUBSCRIBER_FILE: subscriber_ids.json
 TGID_FILE: talkgroup_ids.json
 PEER_URL: https://www.radioid.net/static/rptrs.json
 SUBSCRIBER_URL: https://www.radioid.net/static/users.json
-STALE_DAYS: 7
+STALE_DAYS: 2
 
 # OPENBRIDGE INSTANCES - DUPLICATE SECTION FOR MULTIPLE CONNECTIONS
 # OpenBridge is a protocol originall created by DMR+ for connection between an
@@ -513,14 +536,14 @@ EOF
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Set up logging"
+echo "Set up logging....."
 echo "------------------------------------------------------------------------------"
         mkdir -p /var/log/hblink
         touch /var/log/hblink/hblink.log
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Install docker-compose YAML and set up to run the server"
+echo "Installing docker-compose YAML and set up to run the server....."
 echo "------------------------------------------------------------------------------"
 sleep 2
                 cd $INSDIR
@@ -544,14 +567,14 @@ sleep 2
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Set up permissions"
+echo "Set up permissions....."
 echo "------------------------------------------------------------------------------"
         chown -R 54000 /etc/hblink3
         chown -R 54000 /var/log/hblink
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Wake up the container and pull latest docker image from ShaYmez"
+echo "Wake up the docker container and pull latest docker image from ShaYmez....."
 echo "------------------------------------------------------------------------------"
         docker-compose up -d
         sleep 10
@@ -562,15 +585,10 @@ echo "Stopping container....."
 sleep 2
 echo ""
 echo ""
-echo "------------------------------------------------------------------------------"
-echo "The installation will now complete.... Please wait...."
-echo "------------------------------------------------------------------------------"
+echo "----------------------------------------------------------------------------------"
+echo "The installation will now complete.... Please wait.... Starting docker engine....."
+echo "----------------------------------------------------------------------------------"
 sleep 5
-echo ""
-echo ""
-echo "-------------------------------------------------------------------------------------------------"
-echo "If you would like to cancel please hit "CTRL-X" now...  Otherwise HBlink will start automatically"
-echo "-------------------------------------------------------------------------------------------------"
         sleep 10
         clear
         sleep 2
