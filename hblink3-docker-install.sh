@@ -63,7 +63,7 @@ echo " Installing required software..."
 echo "------------------------------------------------------------------------------"
 sleep 2
 apt-get install -y $DEP
-figlet "OBP Installer"
+figlet "docker.io"
 sleep 2
 
   echo ""
