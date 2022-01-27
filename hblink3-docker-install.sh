@@ -585,6 +585,14 @@ echo "Stopping container....."
 sleep 2
 echo ""
 echo ""
+echo "------------------------------------------------------------------------------"
+echo "Finishing up.....        Cleaning up installation files.....     /opt/tmp....."
+echo "------------------------------------------------------------------------------"
+        rm -rf /opt/tmp
+echo "Done."
+sleep 2
+echo ""
+echo ""
 echo "----------------------------------------------------------------------------------"
 echo "The installation will now complete.... Please wait.... Starting docker engine....."
 echo "----------------------------------------------------------------------------------"
