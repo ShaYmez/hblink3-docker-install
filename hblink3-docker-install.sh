@@ -587,7 +587,7 @@ sleep 2
 echo "Starting HBmon....."
         systemctl enable hbmon
         systemctl start hbmon
-figlet "HBMonV2
+figlet "HBMonV2"
 echo "Done."
 sleep 2
 echo ""
