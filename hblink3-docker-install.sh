@@ -25,11 +25,11 @@
 # Step 2: Run this script on the computer.
 # Step 4: Reboot after installation.
 # This is a docker version and you can use the following comands to control / maintain your server
-# cd /etc/hblink3 
-# ./start.sh
-# ./stop.sh
-# ./restart.sh
-# ./update.sh
+# cd /etc/hblink3
+# docker-compose up -d (starts the hblink3 docker container)
+# docker-compose down (shuts down the hblink container and stops the service)
+# docker-compose pull (updates the container to the latest docker image)
+# systemctl |stop|start|restart|status hbmon (controls the HBMonv2 dash service)
 # logs can be found in var/log/hblink or docker comand "docker container logs hblink"
 #Lets begin-------------------------------------------------------------------------------------------------
 if [ "$EUID" -ne 0 ];
@@ -105,7 +105,7 @@ sleep 2
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
         fi
-echo "Done"
+echo "Done."
 echo "------------------------------------------------------------------------------"
 echo "Downloading and installing HBMonv2 Dashboard"
 echo "------------------------------------------------------------------------------"
@@ -127,7 +127,7 @@ then
         echo "------------------------------------------------------------------------------"
         exit 0
 fi
-echo "Done"
+echo "Done."
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
@@ -145,10 +145,10 @@ echo ""
 echo "------------------------------------------------------------------------------"
 echo "Install HBMonv2 Dashboard"
 echo "------------------------------------------------------------------------------"
-sleep 2 
+sleep 2
                 cd /var/www/html/
                 mv /var/www/html/index.html /var/www/html/index_APACHE.html
-                cp -a /opt/HNMonv2/html/. /var/www/html/
+                cp -a /opt/HBMonv2/html/. /var/www/html/
 if [ -e info.php ]
 then
         echo "------------------------------------------------------------------------------"
@@ -179,7 +179,7 @@ sleep 2
          sleep 3
 
          echo Make config directory...
-         mkdir /etc/hblink3 
+         mkdir /etc/hblink3
          chmod 755 /etc/hblink3
 
          echo make json directory...
@@ -187,9 +187,9 @@ sleep 2
 
          echo get json files...
          cd /etc/hblink3/json
-         curl http://downloads.freedmr.uk/downloads/local_subscriber_ids.json -o subscriber_ids.json 
-         curl https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json 
-         curl https://www.radioid.net/static/rptrs.json -o peer_ids.json 
+         curl http://downloads.freedmr.uk/downloads/local_subscriber_ids.json -o subscriber_ids.json
+         curl https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json
+         curl https://www.radioid.net/static/rptrs.json -o peer_ids.json
          chmod -R 0755 /etc/hblink3/json/
 echo "Done"
 echo ""
@@ -583,10 +583,13 @@ figlet "HBlink Master"
 sleep 3
         docker container logs hblink
 echo "Done."
+sleep 2
 echo "Starting HBmon....."
         systemctl enable hbmon
         systemctl start hbmon
+figlet "HBMonV2
 echo "Done."
+sleep 2
 echo ""
 echo ""
 echo "*************************************************************************"
@@ -604,7 +607,7 @@ echo "                         docker-compose up -d                            "
 echo "      More documentation can be found on the HBlink3 git repo            "
 echo "         https://github.com/ShaYmez/hblink3-docker-install               "
 echo ""
-echo "                     Thanks for using this script.                       " 
+echo "                     Thanks for using this script.                       "
 echo "                Copyright © 2022 Shane Daley - M0VUB                     "
 echo "   More information can be found @ https://freestar.network/development  "
 echo ""
