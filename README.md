@@ -16,7 +16,7 @@ HBMonv2 which is a dashboard designed for HBlink3 by SP2ONG! This runs side by s
 
 This installer includes all the usual libs and packages including apache2, php and python3.
 
-### Prerequiste
+### Prerequisite
 System must be dabian 9, 10 or 11. This script has been tested on most architectures but the system requires at a minimum must meet the minimum requirements to run docker and additional procceses! The system must be upto date and have Git installed. You can install Git from the CLI.
 ```sh
 apt-get install -y git
