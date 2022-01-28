@@ -2,8 +2,8 @@
 This is a multi-arch docker installer for HBlink3 and HBmonV2 combined
 
 ## Additional Features
-### Docker 
-Docker container pre-built for multi-arch including
+### Docker Multi-Arch build
+Docker container pre-built for multi-arch!
 
 * x86_64
 * armv6 / armv7
@@ -26,6 +26,7 @@ apt-get install -y git
 ```sh
 apt update
 sudo su
+```
 2. It is very important that the installer runs from the opt dir. We will then want to get this repository and clone it to the /opt directory.
 ```sh
 cd /opt
