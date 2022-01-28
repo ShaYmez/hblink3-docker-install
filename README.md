@@ -84,5 +84,16 @@ The installtion can be upgraded either by the use of a future scripts or by manu
 docker-compose pull
 ```
 
+## Ports to forward
+```sh
+http 80/tcp
+https 443/tcp
+report 4321/tcp
+websocket 9000/udp
+MMDVM 62030-62031/udp
+OBP 62032-62050/udp
+ssh 22/tcp
+```
+
 ### More to come...
 We will be updating this repository to include more documentation. In the mean time learn about docker @ https://docker.com and visit the HBlink3 official repo for further documentation! https://github.com/HBLink-org/
