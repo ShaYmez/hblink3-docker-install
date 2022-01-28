@@ -1,6 +1,8 @@
 # HBlink3 Docker Installer
 This is a multi-arch docker installer for HBlink3 and HBmonV2 combined
 
+![HBlink](img/HBLINK_logoV1.png "HBlink")
+
 ## Additional Features
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
@@ -66,7 +68,7 @@ or
 systemctl start|stop|restart|status hbmon
 ```
 
-![New HBMonv2 Banner](html/img/HBLINK_logoV2.png "HBMonv2")
+![New HBMonv2 Banner](img/HBLINK_logoV2.png "HBMonv2")
 
 Within this installtion includes the new HBMonv2 by Weldek SP2ONG
 * Better dashboard for monitoring per page
