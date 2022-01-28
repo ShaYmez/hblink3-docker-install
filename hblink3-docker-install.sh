@@ -55,7 +55,7 @@ INSDIR=/opt/tmp/
 HBLINKTMP=/opt/tmp/hblink3
 HBMONDIR=/opt/HBMonv2/
 HBDIR=/etc/hblink3/
-DEP="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev sed cargo apache2 php snapd figlet"
+DEP="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
 HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
 echo "------------------------------------------------------------------------------"
@@ -81,7 +81,6 @@ sleep 2
         elif [ "$ARC" = "armv7l" ];
         then
                 curl -sSL https://get.docker.com | sh
-                apt-get install -y conntrack
                 pip3 install docker-compose
                 systemctl enable docker
                 systemctl start docker
@@ -90,7 +89,6 @@ sleep 2
         elif [ "$ARC" = "aarch64" ];
         then
                 curl -sSL https://get.docker.com | sh
-                apt-get install -y conntrack
                 pip3 install docker-compose
                 systemctl enable docker
                 systemctl start docker
@@ -111,7 +109,7 @@ echo "Downloading and installing HBMonv2 Dashboard....."
 echo "------------------------------------------------------------------------------"
 sleep 2
 cd /opt/
-mkdir tmp
+mkdir -p tmp
 chmod 0755 /opt/tmp/
 cd /opt/
 git clone $HBGITMONREPO
@@ -196,7 +194,7 @@ fi
 echo "Done."
 sleep 2
 echo "------------------------------------------------------------------------------"
-echo "InstallING HBlink3 configuration dirs....."
+echo "Installing HBlink3 configuration dirs....."
 echo "------------------------------------------------------------------------------"
 sleep 2
          echo Restart docker...
@@ -204,7 +202,7 @@ sleep 2
          sleep 3
 
          echo Make config directory...
-         mkdir /etc/hblink3
+         mkdir -p /etc/hblink3
          chmod 0755 /etc/hblink3
 
          echo make json directory...
@@ -505,15 +503,15 @@ configuration file.
 BRIDGES = {
     'WORLDWIDE': [
             {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 1,    'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
-            {'SYSTEM': 'CLIENT-1',    'TS': 1, 'TGID': 3100, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
+#            {'SYSTEM': 'CLIENT-1',    'TS': 1, 'TGID': 3100, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
         ],
     'ENGLISH': [
             {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 13,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
-            {'SYSTEM': 'CLIENT-2',    'TS': 1, 'TGID': 13,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
+#            {'SYSTEM': 'CLIENT-2',    'TS': 1, 'TGID': 13,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
         ],
     'STATEWIDE': [
             {'SYSTEM': 'MASTER-1',    'TS': 2, 'TGID': 3129, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
-            {'SYSTEM': 'CLIENT-2',    'TS': 2, 'TGID': 3129, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
+#            {'SYSTEM': 'CLIENT-2',    'TS': 2, 'TGID': 3129, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
         ]
 }
 
