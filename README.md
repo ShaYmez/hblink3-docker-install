@@ -1,5 +1,5 @@
 # HBlink3 Docker Installer
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined
+This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
@@ -14,33 +14,33 @@ Docker container pre-built for multi-arch!
 * lots more!
 
 This installer builds the entire server! It includes all of the dependencies needed to run HBlink3 within docker via docker-compose. The install also includes
-HBMonv2 which is a dashboard designed for HBlink3 by SP2ONG! This runs side by side but at this time is build on the host machine. HBMonv2 is controlled by a system unit file which runs the python code on the host.
+HBMonv2 which is a dashboard designed for HBlink3 by SP2ONG! This runs side by side, but at this time runs on the host machine. HBMonv2 is controlled by a system unit file which runs the python code on the host.
 
 This installer includes all the usual libs and packages including apache2, php and python3.
 
 ### Prerequisite
-System must be dabian 9, 10 or 11. This script has been tested on most architectures but the system requires at a minimum must meet the minimum requirements to run docker and additional procceses! The system must be upto date and have Git installed. You can install Git from the CLI.
+System must be dabian 10 or 11. This script has been tested on most architectures but the system requires at a minimum the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 ```sh
 apt-get install -y git
 ```
 ### Installation
-1. Have preferably a clean Dabian/Ubuntu system. Mkae sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
+1. Have preferably a clean Dabian 10 or 11 system. Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
 ```sh
 apt update
 sudo su
 ```
-2. It is very important that the installer runs from the opt dir. We will then want to get this repository and clone it to the /opt directory.
+2. It is very important that the installer runs from the /opt dir. We will then want to get this repository and clone it to the /opt directory.
 ```sh
 cd /opt
 git clone https://github.com/ShaYmez/hblink3-docker-install
 ```
-3. Now enter the cloned repo and execute the install script.
+3. Now cd in to the cloned repo and execute the install script. No need to chmod as permissions are already satisfied.
 ```sh
 cd hblink3-docker-install
 ./hblink3-docker-install.sh
 ```
 4. follow the install and any prompts! It it will prompt you for kernel updates if neccassary.
-5. Once the installtion is complete it is recommended to reboot the machine.
+5. Once the installation is complete it is recommended to reboot the machine.
 6. To interact with HBlink3 in docker you need to enter the HBlink3 directory
 ```sh
 cd /etc/hblink3
@@ -79,7 +79,7 @@ Within this installtion includes the new HBMonv2 by Weldek SP2ONG
 * Includes talkgroup html editable page	
 
 ## Easy Installation And Upgrade
-The installtion can be upgraded either by the use of a future scripts or by manually backing up your configuration and re-running the install script. Also the ability and really cool feature of docker-compose is that its easy to update the container with fresh images! Run by a simple command. Make sure you are in the /etc/hblink3 dir.
+The installation can be upgraded either by the use of a future scripts or by manually backing up your configuration and re-running the install script. Also the ability and really cool feature of docker-compose is that its easy to update the container with fresh images! Run by a simple command. Make sure you are in the /etc/hblink3 dir.
 ```sh
 docker-compose pull
 ```
