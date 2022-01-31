@@ -165,8 +165,8 @@ PEER_URL        = 'https://database.radioid.net/static/rptrs.json'
 SUBSCRIBER_URL  = 'https://database.radioid.net/static/users.json'
 
 # Settings for log files
-LOG_PATH        = '/var/log/hblink/'             # MUST END IN '/'
-LOG_NAME        = 'hblink.log'
+LOG_PATH        = './log/'             # MUST END IN '/'
+LOG_NAME        = 'hbmon.log'
 EOF
                 cp utils/hbmon.service /lib/systemd/system/
                 cp utils/lastheard /etc/cron.daily/
