@@ -56,24 +56,20 @@ INSDIR=/opt/tmp/
 HBLINKTMP=/opt/tmp/hblink3
 HBMONDIR=/opt/HBMonv2/
 HBDIR=/etc/hblink3/
-DEP="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet"
+DEP="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php7.3 snapd figlet"
+DEP1="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php7.4 snapd figlet"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
 HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
+echo ""
 echo "------------------------------------------------------------------------------"
-echo " Installing required software....."
+echo "Downloading and installing required software & dependencies....."
 echo "------------------------------------------------------------------------------"
-sleep 2
-apt-get install -y $DEP
-figlet "docker.io"
-sleep 2
-
-  echo ""
-        echo "------------------------------------------------------------------------------"
-        echo "Downloading and installing Docker....."
-        echo "------------------------------------------------------------------------------"
 
         if [ $VERSION = 10 ];
         then
+                apt-get install -y $DEP
+                sleep 2
+                figlet "docker.io"
                 curl -sSL https://get.docker.com | sh
                 apt-get install -y docker-compose
                 systemctl enable docker
@@ -82,6 +78,9 @@ sleep 2
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
         elif [ $VERSION = 11 ];
         then
+                apt-get install -y $DEP1
+                sleep 2
+                figlet "docker.io"
                 curl -sSL https://get.docker.com | sh
                 apt-get install -y docker-compose
                 systemctl enable docker
