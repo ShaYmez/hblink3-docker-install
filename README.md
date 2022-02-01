@@ -1,5 +1,5 @@
 # HBlink3 Docker Installer
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 11
+This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 or 11
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
@@ -19,7 +19,7 @@ HBMonv2 which is a dashboard designed for HBlink3 by SP2ONG! This runs side by s
 This installer includes all the usual libs and packages including apache2, php and python3.
 
 ### Prerequisite
-System must be dabian 11. This script has been tested on most architectures but the system requires at a minimum the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+System must be dabian 10 or 11.This script is is not advisable to run this installer on Debian 9. This script has been tested on most architectures but the system requires at a minimum the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 Note* If you get a Locale error(s) (LC_CTYPE=UTF-8, which is wrong) can happen when you login over ssh from a Mac to a linux box, and your terminal automatically sets environment variables. There's a checkbox for that. Uncheck it, and you're good to go.
 Make sure your system is up-to-date and pull Git from the apt repo.
 ```sh
