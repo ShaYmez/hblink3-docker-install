@@ -71,14 +71,7 @@ sleep 2
         echo "------------------------------------------------------------------------------"
         echo "Downloading and installing Docker....."
         echo "------------------------------------------------------------------------------"
-        if [ $VERSION = 9 ];
-        then
-                curl -sSL https://get.docker.com | sh
-                apt-get install -y docker-compose
-                systemctl enable docker
-                systemctl start docker
-                echo Set userland-proxy to false...
-                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+
         elif [ $VERSION = 10 ];
         then
                 curl -sSL https://get.docker.com | sh
@@ -95,6 +88,11 @@ sleep 2
                 systemctl start docker
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+        else
+        echo "-------------------------------------------------------------------------------------------"
+        echo "Operating system not supported! Please check your configuration or upgrade. Exiting....."
+        echo "-------------------------------------------------------------------------------------------"
+        exit 0
         fi
 echo "Done."
 echo "------------------------------------------------------------------------------"
