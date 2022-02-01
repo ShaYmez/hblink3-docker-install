@@ -1,5 +1,5 @@
 #!/bin/bash
-# Version 1.6 hblink3-docker-installer
+# Version 1.6.1 hblink3-docker-installer
 #
 ##################################################################################
 #   Copyright (C) 2021-2022 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
@@ -47,6 +47,7 @@ fi
 DIRDIR=$(pwd)
 LOCAL_IP=$(ip a | grep inet | grep "eth0\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
 ARC=$(lscpu | grep Arch | awk '{print $2}')
+VERSION=$(sed 's/\..*//' /etc/debian_version)
 ARMv7l=https://get.docker.com | sh
 ARMv8l=https://get.docker.com | sh
 X32=https://get.docker.com | sh
@@ -70,34 +71,26 @@ sleep 2
         echo "------------------------------------------------------------------------------"
         echo "Downloading and installing Docker....."
         echo "------------------------------------------------------------------------------"
-        if [ "$ARC" = "x86_64" ];
+        if [ $VERSION = 9 ];
         then
                 curl -sSL https://get.docker.com | sh
-                pip3 install docker-compose
+                apt-get install -y docker-compose
                 systemctl enable docker
                 systemctl start docker
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
-        elif [ "$ARC" = "armv7l" ];
+        elif [ $VERSION = 10 ];
         then
                 curl -sSL https://get.docker.com | sh
-                pip3 install docker-compose
+                apt-get install -y docker-compose
                 systemctl enable docker
                 systemctl start docker
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
-        elif [ "$ARC" = "aarch64" ];
+        elif [ $VERSION = 11 ];
         then
                 curl -sSL https://get.docker.com | sh
-                pip3 install docker-compose
-                systemctl enable docker
-                systemctl start docker
-                echo Set userland-proxy to false...
-                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
-        elif [ "$ARC" = "i686" ];
-        then
-                curl -sSL https://get.docker.com | sh
-                pip3 install docker-compose
+                apt-get install -y docker-compose
                 systemctl enable docker
                 systemctl start docker
                 echo Set userland-proxy to false...
@@ -630,6 +623,8 @@ echo "                           cd /etc/hblink3                               "
 echo "                         docker-compose up -d                            "
 echo "      More documentation can be found on the HBlink3 git repo            "
 echo "         https://github.com/ShaYmez/hblink3-docker-install               "
+echo ""
+echo"                       Your local IP is $LOCAL_IP                         "
 echo ""
 echo "                     Thanks for using this script.                       "
 echo "                Copyright © 2022 Shane Daley - M0VUB                     "
