@@ -21,7 +21,7 @@
 #
 # A tool to install HBlink3 Docker with Debian / Ubuntu support.
 # This essentially is a HBlink3 server fully installed with dashboard / SSL ready to go.
-# Step 1: Install Debian 9 10 or 11 or Ubuntu 20.04 onwards.. and make sure it has internet and is up to date.
+# Step 1: Install Debian 10 or 11 or Ubuntu 20.04 onwards.. and make sure it has internet and is up to date.
 # Step 2: Run this script on the computer.
 # Step 4: Reboot after installation.
 # This is a docker version and you can use the following comands to control / maintain your server
