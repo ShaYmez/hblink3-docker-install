@@ -46,6 +46,7 @@ then
 fi
 DIRDIR=$(pwd)
 LOCAL_IP=$(ip a | grep inet | grep "eth0\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
+EXTERNAL_IP=$(curl https://ipecho.net/plain)
 ARC=$(lscpu | grep Arch | awk '{print $2}')
 VERSION=$(sed 's/\..*//' /etc/debian_version)
 ARMv7l=https://get.docker.com | sh
@@ -621,8 +622,10 @@ echo "                         docker-compose up -d                            "
 echo "      More documentation can be found on the HBlink3 git repo            "
 echo "         https://github.com/ShaYmez/hblink3-docker-install               "
 echo ""
-echo"                       Your local IP is $LOCAL_IP                         "
-echo ""
+echo "                      Your local IP is $LOCAL_IP                         "
+echo "                    Your external IP is $EXTERNAL_IP                     "
+echo "              Your running on $ARC with Debian $VERSION                  "
+echo ""           
 echo "                     Thanks for using this script.                       "
 echo "                Copyright © 2022 Shane Daley - M0VUB                     "
 echo "   More information can be found @ https://freestar.network/development  "
