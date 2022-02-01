@@ -72,7 +72,7 @@ sleep 2
         echo "Downloading and installing Docker....."
         echo "------------------------------------------------------------------------------"
 
-        elif [ $VERSION = 10 ];
+        if [ $VERSION = 10 ];
         then
                 curl -sSL https://get.docker.com | sh
                 apt-get install -y docker-compose
@@ -93,7 +93,7 @@ sleep 2
         echo "Operating system not supported! Please check your configuration or upgrade. Exiting....."
         echo "-------------------------------------------------------------------------------------------"
         exit 0
-        fi
+fi
 echo "Done."
 echo "------------------------------------------------------------------------------"
 echo "Downloading and installing HBMonv2 Dashboard....."
