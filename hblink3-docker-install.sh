@@ -183,6 +183,17 @@ then
         exit 0
 fi
 echo "Done."
+
+echo "Install crontab..."
+cat << EOF > /etc/cron.daily/lastheard
+#!/bin/bash
+mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
+/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
+mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
+/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
+EOF
+chmod 755 /etc/cron.daily/lastheard
+
 sleep 2
 echo "------------------------------------------------------------------------------"
 echo "Installing HBlink3 configuration dirs....."
