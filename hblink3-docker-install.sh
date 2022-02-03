@@ -79,11 +79,11 @@ echo "--------------------------------------------------------------------------
                 $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
                 
                 apt-get update
-                apt-get install docker-ce docker-ce-cli containerd.io
+                apt-get install -y docker-ce docker-ce-cli containerd.io
                 apt-get install -y docker-compose
                 systemctl enable docker
                 systemctl start docker
-                figlet "docker.ce"
+                figlet "docker.io"
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
         elif [ $VERSION = 11 ];
@@ -99,11 +99,11 @@ echo "--------------------------------------------------------------------------
                 $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
                 
                 apt-get update
-                apt-get install docker-ce docker-ce-cli containerd.io
+                apt-get install -y docker-ce docker-ce-cli containerd.io
                 apt-get install -y docker-compose
                 systemctl enable docker
                 systemctl start docker
-                figlet "docker.ce"
+                figlet "docker.io"
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
         else
