@@ -114,6 +114,36 @@ echo "--------------------------------------------------------------------------
 fi
 echo "Done."
 echo "------------------------------------------------------------------------------"
+echo "Installing control scripts /usr/local/sbin....."
+echo "------------------------------------------------------------------------------"
+        cd /opt/hblink3-docker-install/usr/local/sbin
+        cp -p menu /usr/local/sbin/hblink-menu
+        cp -p update /usr/local/sbin/hblink-update
+        cp -p upgrade /usr/local/sbin/hblink-upgrade
+        cp -p stop /usr/local/sbin/hblink-stop
+        cp -p start /usr/local/sbin/hblink-start
+        cp -p restart /usr/local/sbin/hblink-restart
+if [ -e /usr/local/sbin/hblink-menu ]
+then
+        echo "----------------------------------------------------------------------------------------------"
+        echo "It looks like the control scripts installed correctly. Setting permissions..... "
+        echo "----------------------------------------------------------------------------------------------"
+        else
+        echo "-----------------------------------------------------------------------------------------------"
+        echo "I dont see the control scripts! Please check your configuration and try again. Exiting....."
+        echo "-----------------------------------------------------------------------------------------------"
+        exit 0
+fi
+# Permissions for control scripts are set here...
+        chmod 755 /usr/local/sbin/hblink-menu
+        chmod 755 /usr/local/sbin/hblink-update
+        chmod 755 /usr/local/sbin/hblink-upgrade
+        chmod 755 /usr/local/sbin/hblink-stop
+        chmod 755 /usr/local/sbin/hblink-start
+        chmod 755 /usr/local/sbin/hblink/restart
+echo "Done."
+        
+echo "------------------------------------------------------------------------------"
 echo "Downloading and installing HBMonv2 Dashboard....."
 echo "------------------------------------------------------------------------------"
 sleep 2
