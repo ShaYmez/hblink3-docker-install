@@ -1,5 +1,5 @@
 #!/bin/bash
-# Version 1.6.1 hblink3-docker-installer
+# Version 1.6.2 hblink3-docker-installer
 #
 ##################################################################################
 #   Copyright (C) 2021-2022 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
