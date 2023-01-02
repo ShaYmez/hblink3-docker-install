@@ -25,20 +25,19 @@ menuopt=$(whiptail --title "HBlink3 Control Version 1.9PL" --menu "Select option
 3 " Restart HBlink " \
 4 " Update HBlink / Docker " \
 5 " Flush HBlink / Truncate Logs " \
-6 " Edit Configuration " \
-7 " Edit Routing Rules / Python " \
+6 " Edit HBlink Config " \
+7 " Edit HBlink Rules " \
 8 " Edit Dashboard Config " \
 9 " Full Upgrade OBPMaster " \
 10 " System Update / apt update " \
-11 " Reboot Entire Server "
+11 " Reboot Entire Server " \
 12 " Shutdown Entire Server " 3>&1 1>&2 2>&3)
 exitstatus=$?
 # Back-end HBlink3 menu
-#exitstatus=$?
 if [ $exitstatus = 0 ]; then
     echo "You have chosen option:" $menuopt
 else
-    echo "Type 'menu' to start HBlink3 Control Menu "; break;
+    echo "Type 'hblink-menu' to enter HBlink3 Control Menu "; break;
 fi
 # Action
 case $menuopt in
