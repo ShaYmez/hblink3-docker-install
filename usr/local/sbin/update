@@ -32,7 +32,7 @@ sleep 1
 echo ".."
 sleep 1
 echo "..."
-echo Stopping OBP MasterServer.....
+echo Stopping HBlink3.....
 cd /etc/hblink3
 docker-compose down
 echo Removing all docker images.....
@@ -40,32 +40,35 @@ docker rmi $(docker images -q -a) --force
 figlet "ShaYmez." 
 sleep 1
 echo Flushing services and restarting.....
-/usr/bin/hblink-flush        
+/usr/local/sbin/hblink-flush        
 echo "Done."        
 echo ""
 echo ""
 echo "*************************************************************************"
 echo ""
-echo "                The OBP-MasterServer Update Is Complete!                 "
+echo "                 The HBlink3 Docker Update Is Complete!                  "
 echo ""
-echo "               ******* To Upgrade run ./upgrade.sh *******               "
+echo "             ******* To Upgrade run 'hblink-upgrade *******              "
 echo ""
 echo "        Use 'docker container logs hblink' to check the status.          "
-echo "                  logs are part in /var/log/hblink.                      "
+echo "                  logs are parked in /var/log/hblink.                      "
 echo "  Just make sure this computer can be accessed over UDP specified port   "
 echo "  You will need to edit your config and then run the following command   "
 echo ""
-echo "                           cd /etc/hblink3                               "
-echo "                         docker-compose up -d                            "
-echo "      More documentation can be found on the HBlink3 git repo            "
-echo "              https://github.com/ShaYmez/OBP-installer                   "
+echo "                    Type 'hblink-menu' for main menu                     "
+echo "                Use the menu to edit your server / config                "
+echo "         Refur to the official HBlink Repo for more documentation        "
+echo "                 https://github.com/HBLink-org/hblink3                   "
+echo ""
+echo "              Check out the docker installer of HBlink3 here             "
+echo "             https://github.com/ShaYmez/hblink3-docker-install           "
 echo ""
 echo "                     Your IP address is $LOCAL_IP                        "
 echo ""
 echo "              Your running on $ARC with Debian $VERSION                  "
 echo ""           
-echo "                     Thanks for using this script.                       "
-echo "                Copyright © 2022 Shane Daley - M0VUB                     "
+echo "                    Thanks for using this script.                        "
+echo "                Copyright © 2023 Shane Daley - M0VUB                     "
 echo "   More information can be found @ https://freestar.network/development  "
 echo ""
 echo "*************************************************************************"
