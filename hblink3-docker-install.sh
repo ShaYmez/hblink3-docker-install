@@ -1,5 +1,5 @@
 #!/bin/bash
-# Version 1.6.2 hblink3-docker-installer
+# Version 1.6.3 hblink3-docker-installer
 #
 ##################################################################################
 #   Copyright (C) 2021-2022 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
@@ -57,8 +57,8 @@ INSDIR=/opt/tmp/
 HBLINKTMP=/opt/tmp/hblink3
 HBMONDIR=/opt/HBMonv2/
 HBDIR=/etc/hblink3/
-DEP="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
-DEP1="wget curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
+DEP="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
+DEP1="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
 HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
 echo ""
@@ -118,6 +118,7 @@ echo "Installing control scripts /usr/local/sbin....."
 echo "------------------------------------------------------------------------------"
         cd /opt/hblink3-docker-install/usr/local/sbin
         cp -p menu /usr/local/sbin/hblink-menu
+        cp -p flush /usr/local/sbin/hblink-flush
         cp -p update /usr/local/sbin/hblink-update
         cp -p upgrade /usr/local/sbin/hblink-upgrade
         cp -p stop /usr/local/sbin/hblink-stop
@@ -136,6 +137,7 @@ then
 fi
 # Permissions for control scripts are set here...
         chmod 755 /usr/local/sbin/hblink-menu
+        chmod 755 /usr/local/sbin/hblink-flush
         chmod 755 /usr/local/sbin/hblink-update
         chmod 755 /usr/local/sbin/hblink-upgrade
         chmod 755 /usr/local/sbin/hblink-stop
@@ -173,6 +175,7 @@ echo "--------------------------------------------------------------------------
 sleep 2
                 pip3 install setuptools wheel
                 pip3 install -r requirements.txt
+                pip3 install attrs --force
         echo Install /opt/HBMonv2/config.py ...
 cat << EOF > /opt/HBMonv2/config.py
 CONFIG_INC      = True                           # Include HBlink stats
@@ -199,7 +202,7 @@ TGID_FILE       = 'talkgroup_ids.json'           # User provided
 LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # User provided (optional, leave '' if you don't use it)
 LOCAL_PEER_FILE = 'local_peer_ids.json'          # User provided (optional, leave '' if you don't use it)
 LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # User provided (optional, leave '' if you don't use it)
-FILE_RELOAD     = 15                             # Number of days before we reload DMR-MARC database files
+FILE_RELOAD     = 14                             # Number of days before we reload DMR-MARC database files
 PEER_URL        = 'https://database.radioid.net/static/rptrs.json'
 SUBSCRIBER_URL  = 'https://database.radioid.net/static/users.json'
 
@@ -668,26 +671,29 @@ echo ""
 echo ""
 echo "*************************************************************************"
 echo ""
-echo "            The HBlink-MasterServer Installation Is Complete!            "
+echo "                The HBlink3 Docker Install Is Complete!                  "
 echo ""
-echo "                ******* Now reboot the server. *******                   "
+echo "             ******* To Update run 'hblink-update *******                "
 echo ""
 echo "        Use 'docker container logs hblink' to check the status.          "
-echo "                  logs are part in /var/log/hblink.                      "
+echo "                  logs are parked in /var/log/hblink.                    "
 echo "  Just make sure this computer can be accessed over UDP specified port   "
 echo "  You will need to edit your config and then run the following command   "
 echo ""
-echo "                           cd /etc/hblink3                               "
-echo "                         docker-compose up -d                            "
-echo "      More documentation can be found on the HBlink3 git repo            "
-echo "         https://github.com/ShaYmez/hblink3-docker-install               "
+echo "                    Type 'hblink-menu' for main menu                     "
+echo "                Use the menu to edit your server / config                "
+echo "         Refur to the official HBlink Repo for more documentation        "
+echo "                 https://github.com/HBLink-org/hblink3                   "
 echo ""
-echo "                     Your IP address is $LOCAL_IP                        "
+echo "              Check out the docker installer of HBlink3 here             "
+echo "            https://github.com/ShaYmez/hblink3-docker-install            "
+echo ""
+echo "                      Your IP address is $LOCAL_IP                       "
 echo ""
 echo "              Your running on $ARC with Debian $VERSION                  "
 echo ""           
 echo "                     Thanks for using this script.                       "
-echo "                Copyright © 2022 Shane Daley - M0VUB                     "
+echo "                 Copyright © 2023 Shane Daley - M0VUB                    "
 echo "   More information can be found @ https://freestar.network/development  "
 echo ""
 echo "*************************************************************************"
