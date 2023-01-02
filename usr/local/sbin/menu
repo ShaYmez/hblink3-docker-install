@@ -1,7 +1,7 @@
 #!/bin/bash
-# HBLINK3 OBP MASTER Configuration menu DO-NOT-ALTER THIS FILE!!!!!!!!!!
-# SYSTEM-X FORMERLY RYSEN MASTER+ (HBlink3) A FORK OF THE FREEDMR / HBLINK PROJECT
-# This script written by Shane Daley M0VUB. The script gracefully shutsdown services while services are cleaned and logs are truncated.
+
+# HBLINK3 DOCKER CONTROL SCRIPTS V1.9
+# This script written by Shane Daley M0VUB. The script gracefully shuts down services while services are cleaned and logs are truncated.
 # We can also add items in this script for future use like updates or further log trims.
 # Add to the cron tab for auto execution
 
@@ -19,52 +19,55 @@
 
 # Main MENU system.....
 while : ; do
-menuopt=$(whiptail --title "HBlink3 OBPMaster Control Version 1.9CL" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 23 56 13 \
-1 " Restart OBPMaster " \
-2 " Stop OBPMaster " \
-3 " Start OBPMaster " \
-4 " Hard Flush OBPMaster " \
-5 " Soft Flush OBPMaster (Not Used) " \
+menuopt=$(whiptail --title "HBlink3 Control Version 1.9PL" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 23 56 13 \
+1 " Stop HBlink " \
+2 " Start HBlink " \
+3 " Restart HBlink " \
+4 " Update HBlink / Docker " \
+5 " Flush HBlink / Truncate Logs " \
 6 " Edit Configuration " \
-7 " Edit rules.py " \
-8 " Update OBPMaster " \
+7 " Edit Routing Rules / Python " \
+8 " Edit Dashboard Config " \
 9 " Full Upgrade OBPMaster " \
-10 " Update Operating System " \
-11 " Reboot Entire Server " 3>&1 1>&2 2>&3)
+10 " System Update / apt update " \
+11 " Reboot Entire Server "
+12 " Shutdown Entire Server " 3>&1 1>&2 2>&3)
 exitstatus=$?
-# Back-end rysen menu
+# Back-end HBlink3 menu
 #exitstatus=$?
 if [ $exitstatus = 0 ]; then
     echo "You have chosen option:" $menuopt
 else
-    echo "Type 'menu' to start HBlink3 OBPMaster Control Menu "; break;
+    echo "Type 'menu' to start HBlink3 Control Menu "; break;
 fi
 # Action
 case $menuopt in
 1)
-/usr/bin/hblink-restart ;;
+sudo /usr/local/sbin/hblink-stop ;;
 2)
-/usr/bin/hblink-stop ;;
+sudo /usr/local/sbin/hblink-start ;;
 3)
-/usr/bin/hblink-start ;;
+sudo /usr/local/sbin/hblink-restart ;;
 4)
-/usr/bin/hblink-flush ;;
+sudo /usr/local/sbin/hblink-update ;;
 5)
-/usr/bin/hblink-soft-flush ;;
+sudo /usr/local/sbin/hblink-flush ;;
 6)
 sudo nano /etc/hblink3/hblink.cfg ;;
 7)
 sudo nano /etc/hblink3/rules.py ;;
 8)
-/usr/bin/hblink-update ;;
+sudo nano /opt/HBMonv2/config.py ;;
 9)
-echo "No updates" && sleep 2 ;;
+sudo /usr/local/sbin/hblink-upgrade ;;
 10)
 sudo apt-get update -y && sudo apt-get upgrade ;;
 11)
-sudo reboot now ;
+sudo reboot ;;
+12)
+sudo shutdown now ;
 esac
 done
 exit 0
 
-# Menu system by ShaYmez https://github/ShaYmez
+# Wiptail menu system by ShaYmez https://github/ShaYmez
