@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# OBP-MASTER FORMERLY RYSEN MASTER+ (HBlink3) A FORK OF THE FREEDMR / HBLINK PROJECT
-# This script written by Shane Daley M0VUB. The script gracefully shutsdown services while services are cleaned and logs are truncated.
+# HBLINK3 DOCKER CONTROL SCRIPTS V1.9
+# This script written by Shane Daley M0VUB. The script gracefully shuts down services while services are cleaned and logs are truncated.
 # We can also add items in this script for future use like updates or further log trims.
 # Add to the cron tab for auto execution
 
@@ -17,9 +17,11 @@
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
 
-# Update containers / service clean/truncate/ and restart of services..
+# Restart routine for HBlink3 (ShaYmez docker only)
 
-echo Restarting Server.....
+# Start service clean/truncate/ and restart of services.
+
+echo Restarting HBlink3.....
 cd /etc/hblink3
 sleep 1
 echo "."
@@ -30,10 +32,10 @@ echo "..."
 docker-compose restart
 sleep 1
 
-figlet "OBP Master." 
+figlet "HBlink 3" 
 sleep 1
 
-echo "Checking OBP is composed....."
+echo "Checking HBlink is composed....."
 sleep 1
 docker ps
 sleep 1
@@ -47,7 +49,7 @@ echo "Flushing network tracking table....."
 conntrack -F
 sleep 1
 
-echo "Restarting HBmonitor....."
+echo "Restarting Dashboard....."
 systemctl restart hbmon
 figlet "HBmonitor3"
 echo "Done."
@@ -59,4 +61,4 @@ sleep 1
 echo ..
 sleep 1
 echo ...
-echo "OBP MasterServer has been restarted. Proccess is now complete and you may now exit. AKA ShaYmez."
+echo "HBlink has been restarted. Proccess is now complete and you may now exit. AKA ShaYmez."
