@@ -1,0 +1,70 @@
+#!/bin/bash
+# HBLINK3 OBP MASTER Configuration menu DO-NOT-ALTER THIS FILE!!!!!!!!!!
+# SYSTEM-X FORMERLY RYSEN MASTER+ (HBlink3) A FORK OF THE FREEDMR / HBLINK PROJECT
+# This script written by Shane Daley M0VUB. The script gracefully shutsdown services while services are cleaned and logs are truncated.
+# We can also add items in this script for future use like updates or further log trims.
+# Add to the cron tab for auto execution
+
+#   Copyright (C) 2020 Shane P, Daley  M0VUB <support@gb7nr.co.uk>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+# Main MENU system.....
+while : ; do
+menuopt=$(whiptail --title "HBlink3 OBPMaster Control Version 1.9CL" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 23 56 13 \
+1 " Restart OBPMaster " \
+2 " Stop OBPMaster " \
+3 " Start OBPMaster " \
+4 " Hard Flush OBPMaster " \
+5 " Soft Flush OBPMaster (Not Used) " \
+6 " Edit Configuration " \
+7 " Edit rules.py " \
+8 " Update OBPMaster " \
+9 " Full Upgrade OBPMaster " \
+10 " Update Operating System " \
+11 " Reboot Entire Server " 3>&1 1>&2 2>&3)
+exitstatus=$?
+# Back-end rysen menu
+#exitstatus=$?
+if [ $exitstatus = 0 ]; then
+    echo "You have chosen option:" $menuopt
+else
+    echo "Type 'menu' to start HBlink3 OBPMaster Control Menu "; break;
+fi
+# Action
+case $menuopt in
+1)
+/usr/bin/hblink-restart ;;
+2)
+/usr/bin/hblink-stop ;;
+3)
+/usr/bin/hblink-start ;;
+4)
+/usr/bin/hblink-flush ;;
+5)
+/usr/bin/hblink-soft-flush ;;
+6)
+sudo nano /etc/hblink3/hblink.cfg ;;
+7)
+sudo nano /etc/hblink3/rules.py ;;
+8)
+/usr/bin/hblink-update ;;
+9)
+echo "No updates" && sleep 2 ;;
+10)
+sudo apt-get update -y && sudo apt-get upgrade ;;
+11)
+sudo reboot now ;
+esac
+done
+exit 0
+
+# Menu system by ShaYmez https://github/ShaYmez

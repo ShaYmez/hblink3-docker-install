@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# OBP-MASTER FORMERLY RYSEN MASTER+ (HBlink3) A FORK OF THE FREEDMR / HBLINK PROJECT
+# This script written by Shane Daley M0VUB. The script gracefully shutsdown services while services are cleaned and logs are truncated.
+# We can also add items in this script for future use like updates or further log trims.
+# Add to the cron tab for auto execution
+
+#   Copyright (C) 2020 Shane P, Daley  M0VUB <support@gb7nr.co.uk>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+# Start service clean/truncate/ and restart of services.
+
+echo "Stopping services....."
+sleep 2
+
+echo "Stopping OBP MasterServer (If not already stopped)...."
+cd /etc/hblink3
+docker-compose down
+echo "Done."
+sleep 1
+
+echo "Stopping HBMonitor....."
+systemctl stop hbmon 
+echo "Done."
+sleep 1
+
+echo "OBP MasterServer Flush and maintenance loop starting....."
+sleep 1
+
+echo "Starting truncate main log folder /var/log....."
+truncate -s 0 /var/log/*log
+
+echo "Starting truncate OBP entire log /var/log/hblink....."
+truncate -s 0 /var/log/hblink/*log &&
+
+echo "Starting truncate Lastheard....."
+truncate -s 0 /opt/HBmonitor/log/*log
+
+echo "Flushing JSON files....."
+echo "/etc/hblink3/json....."
+rm /etc/hblink3/json/peer_ids.json
+rm /etc/hblink3/json/subscriber_ids.json
+#Get JSON files..
+curl https://freestar.network/downloads/subscriber_ids.json -o /etc/hblink3/json/subscriber_ids.json
+curl https://freestar.network/downloads/peer_ids.json -o /etc/hblink3/json/peer_ids.json
+echo "JSON files will be downloaded from freestar.network....."
+figlet "FreeSTAR CL OBP V1.9"
+
+#Restart all services gracefully
+echo "Restart all services....."
+sleep 1
+
+echo "Restarting docker app....."
+systemctl restart docker
+echo "Done."
+sleep 1
+
+echo "Restart apache2....."
+systemctl restart apache2
+echo "Done."
+sleep 1
+
+echo "Starting OBP MasterServer....."
+sleep 1
+echo .
+sleep 1
+echo ..
+sleep 1
+echo ...
+docker-compose up -d
+
+sleep 1
+figlet "OBP Master." 
+sleep 1
+
+echo "Checking OBP is composed....."
+sleep 1
+docker ps
+
+sleep 3
+echo "Checking startup error logs....."
+docker container logs hblink 
+echo "Done."
+
+echo "Flushing network tracking table....."
+conntrack -F
+sleep 1
+
+echo "Starting HBmonitor....."
+systemctl restart hbmon
+figlet "HBmonitor3"
+echo "Done."
+sleep 1
+
+echo "Done. Now Exiting....."
+sleep 1
+echo .
+sleep 1
+echo ..
+sleep 1
+echo ...
+echo "OBP MasterServer is now online. Flush is complete and you may now exit. AKA ShaYmez."
+#
+# This script has been developed by the one and only ShaYmez. Visit https://repo.radio/ShaYmez for more super scripts!
+echo "All systems have been flushed/cleaned and ready to go. Aka Dr. Node. ShaYmez, OBP MasterServer"
