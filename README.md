@@ -47,7 +47,8 @@ cd hblink3-docker-install
 ### New Menu System released with this installer!
 
 ![New HBlink Menu System](img/HBLINK_menu.png "HBlink-menu")
-6. Once the installtion is complete you will be guided to the menu. To interact with this menu follow the on-screen
+
+6. Once the installation is complete you will be guided to the menu. To interact with this menu follow the on-screen
 instructions! Set up and configure your system with the new menu system! Once finihsed hit 'cancel' to exit out of the
 menu. 
 
@@ -121,7 +122,7 @@ MMDVM 62030-62031/udp
 OBP 62032-62050/udp
 ssh 22/tcp
 ```
-### Postquisites
+### Postrequisite
 Make sure you have properly configured your firewall!!! If using Vultr servers they come default with full firewall blockade! For initial testing
 disable the firewall! 
 ```sh
