@@ -31,7 +31,7 @@ apt-get install -y git
 apt update
 sudo su
 ```
-2. It is very important that the installer runs from the /opt dir. We will then want to get this repository and clone it to the /opt directory.
+2. It is very important that the installer runs from the /opt directory. We will then want to get this repository and clone it to the /opt directory.
 ```sh
 cd /opt
 git clone https://github.com/ShaYmez/hblink3-docker-install
@@ -43,23 +43,44 @@ cd hblink3-docker-install
 ```
 4. follow the install and any prompts! It it will prompt you for kernel updates if neccassary.
 5. Once the installation is complete it is recommended to reboot the machine.
-6. To interact with HBlink3 in docker you need to enter the HBlink3 directory
+
+### New Menu System released with this installer!
+
+![New HBlink Menu System](img/HBLINK_menu.png "HBlink-menu")
+6. Once the installtion is complete you will be guided to the menu. To interact with this menu follow the on-screen
+instructions! Set up and configure your system with the new menu system! Once finihsed hit 'cancel' to exit out of the
+menu. 
+
+7. To enter the menu, type the command
+```sh
+hblink-menu
+```
+8. To interact with the routine scripts directly you can enter the comands directly without the use of the menu
+```sh
+hblink-start
+hblink-stop
+hblink-restart
+hblink-flush
+hblink-update
+```
+
+9. To interact with HBlink3 manually in docker you need to enter the HBlink3 directory
 ```sh
 cd /etc/hblink3
 ```
-7. You can only interact with HBlink3 in this directory. Use the following commands to interact with the installation.
+10. You can only interact with HBlink3 in this directory. Use the following commands to interact with the installation.
 ```sh
 docker-compose up -d
 docker-compose down
 docker-compose restart
 docker-compose pull
 ```
-8. Edit your configuration before deployment!
+11. Edit your configuration before deployment!
 ```sh
 nano hblink.cfg
 nano rules.py
 ```
-9. Check the logs for errors!
+12. Check the logs for errors!
 ```sh
 docker container logs hblink
 or
@@ -85,6 +106,10 @@ The installation can be upgraded either by the use of a future scripts or by man
 ```sh
 docker-compose pull
 ```
+or 
+```sh
+hblink-update
+```
 
 ## Ports to forward
 ```sh
@@ -96,6 +121,11 @@ MMDVM 62030-62031/udp
 OBP 62032-62050/udp
 ssh 22/tcp
 ```
-
+### Postquisites
+Make sure you have properly configured your firewall!!! If using Vultr servers they come default with full firewall blockade! For initial testing
+disable the firewall! 
+```sh
+ufw disable
+``` 
 ### More to come...
 We will be updating this repository to include more documentation. In the mean time learn about docker @ https://docker.com and visit the HBlink3 official repo for further documentation! https://github.com/HBLink-org/
