@@ -667,7 +667,6 @@ echo "Starting HBmon....."
         systemctl start hbmon
 figlet "HBMonV2"
 echo "Done."
-sleep 2
 echo ""
 echo ""
 echo "*************************************************************************"
@@ -698,3 +697,10 @@ echo "                 Copyright © 2023 Shane Daley - M0VUB                    
 echo "   More information can be found @ https://freestar.network/development  "
 echo ""
 echo "*************************************************************************"
+echo ""
+echo ""
+echo "Entering HBlink menu....."
+sleep 1
+figlet "'WhipTAIL'"
+sleep 3
+        hblink-menu
