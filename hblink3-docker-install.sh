@@ -203,8 +203,8 @@ LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # User provided (optional, leav
 LOCAL_PEER_FILE = 'local_peer_ids.json'          # User provided (optional, leave '' if you don't use it)
 LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # User provided (optional, leave '' if you don't use it)
 FILE_RELOAD     = 14                             # Number of days before we reload DMR-MARC database files
-PEER_URL        = 'https://database.radioid.net/static/rptrs.json'
-SUBSCRIBER_URL  = 'https://database.radioid.net/static/users.json'
+PEER_URL        = 'https://radioid.net/static/rptrs.json'
+SUBSCRIBER_URL  = 'https://radioid.net/static/users.json'
 
 # Settings for log files
 LOG_PATH        = './log/'             # MUST END IN '/'
@@ -263,10 +263,9 @@ sleep 2
 
          echo get json files...
          cd /etc/hblink3/json
-         curl http://downloads.freedmr.uk/downloads/local_subscriber_ids.json -o subscriber_ids.json
+         curl https://radioid.net/static/users.json -o subscriber_ids.json
          curl https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json
-         curl https://www.radioid.net/static/rptrs.json -o peer_ids.json
-         chmod -R 0755 /etc/hblink3/json/
+         curl https://radioid.net/static/rptrs.json -o peer_ids.json
 echo "Done"
 echo ""
 echo ""
@@ -361,8 +360,8 @@ REPORT_CLIENTS: *
 #
 [LOGGER]
 LOG_FILE: hblink.log
-LOG_HANDLERS: console-timed
-LOG_LEVEL: DEBUG
+LOG_HANDLERS: file-timed,console-timed
+LOG_LEVEL: INFO
 LOG_NAME: HBlink
 
 # DOWNLOAD AND IMPORT SUBSCRIBER, PEER and TGID ALIASES
@@ -373,16 +372,16 @@ LOG_NAME: HBlink
 # download again. Don't be an ass and change this to less than a few days.
 [ALIASES]
 TRY_DOWNLOAD: True
-PATH: ./
+PATH: ./json/
 PEER_FILE: peer_ids.json
 SUBSCRIBER_FILE: subscriber_ids.json
 TGID_FILE: talkgroup_ids.json
-PEER_URL: https://www.radioid.net/static/rptrs.json
-SUBSCRIBER_URL: https://www.radioid.net/static/users.json
-STALE_DAYS: 2
+PEER_URL: https://radioid.net/static/rptrs.json
+SUBSCRIBER_URL: https://radioid.net/static/users.json
+STALE_DAYS: 14
 
 # OPENBRIDGE INSTANCES - DUPLICATE SECTION FOR MULTIPLE CONNECTIONS
-# OpenBridge is a protocol originall created by DMR+ for connection between an
+# OpenBridge is a protocol originally created by DMR+ for connection between an
 # IPSC2 server and Brandmeister. It has been implemented here at the suggestion
 # of the Brandmeister team as a way to legitimately connect HBlink to the
 # Brandemiester network.
@@ -402,7 +401,7 @@ STALE_DAYS: 2
 # Otherwise ACLs work as described in the global stanza
 [OBP-1]
 MODE: OPENBRIDGE
-ENABLED: True
+ENABLED: False
 IP:
 PORT: 62035
 NETWORK_ID: 3129100
@@ -457,7 +456,7 @@ TGID_TS2_ACL: PERMIT:ALL
 # See comments in the GLOBAL stanza
 [REPEATER-1]
 MODE: PEER
-ENABLED: True
+ENABLED: False
 LOOSE: False
 EXPORT_AMBE: False
 IP: 
@@ -489,7 +488,7 @@ TGID_TS2_ACL: PERMIT:ALL
 
 [XLX-1]
 MODE: XLXPEER
-ENABLED: True
+ENABLED: False
 LOOSE: True
 EXPORT_AMBE: False
 IP: 
@@ -524,12 +523,12 @@ EOF
 cat << EOF > /etc/hblink3/rules.py
 '''
 THIS EXAMPLE WILL NOT WORK AS IT IS - YOU MUST SPECIFY YOUR OWN VALUES!!!
-This file is organized around the "Conference Bridges" that you wish to use. If you're a c-Bridge
+This file is organized around the "Conference Bridges" that you wish to use. If you're a C-Bridge
 person, think of these as "bridge groups". You might also liken them to a "reflector". If a particular
 system is "ACTIVE" on a particular conference bridge, any traffid from that system will be sent
 to any other system that is active on the bridge as well. This is not an "end to end" method, because
 each system must independently be activated on the bridge.
-The first level (e.g. "WORLDWIDE" or "STATEWIDE" in the examples) is the name of the conference
+The first level (e.g. "FREESTAR" or "CQ-UK" in the examples) is the name of the conference
 bridge. This is any arbitrary ASCII text string you want to use. Under each conference bridge
 definition are the following items -- one line for each HBSystem as defined in the main HBlink
 configuration file.
@@ -554,15 +553,15 @@ configuration file.
 '''
 
 BRIDGES = {
-    'WORLDWIDE': [
+    'FREESTAR': [
             {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 1,    'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
 #            {'SYSTEM': 'CLIENT-1',    'TS': 1, 'TGID': 3100, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
         ],
-    'ENGLISH': [
+     'CQ-UK': [
             {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 13,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
 #            {'SYSTEM': 'CLIENT-2',    'TS': 1, 'TGID': 13,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
         ],
-    'STATEWIDE': [
+     'CHATTERBOX': [
             {'SYSTEM': 'MASTER-1',    'TS': 2, 'TGID': 3129, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
 #            {'SYSTEM': 'CLIENT-2',    'TS': 2, 'TGID': 3129, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
         ]
@@ -620,6 +619,8 @@ echo ""
 echo "------------------------------------------------------------------------------"
 echo "Set up permissions....."
 echo "------------------------------------------------------------------------------"
+        chmod -R 755 /etc/hblink3
+        chmod -R 777 /etc/hblink3/json
         chown -R 54000 /etc/hblink3
         chown -R 54000 /var/log/hblink
 echo ""
