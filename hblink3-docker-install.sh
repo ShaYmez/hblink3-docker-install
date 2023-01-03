@@ -124,6 +124,7 @@ echo "--------------------------------------------------------------------------
         cp -p stop /usr/local/sbin/hblink-stop
         cp -p start /usr/local/sbin/hblink-start
         cp -p restart /usr/local/sbin/hblink-restart
+        cp -p initial-setup /usr/local/sbin/hblink-initial-setup
 if [ -e /usr/local/sbin/hblink-menu ]
 then
         echo "----------------------------------------------------------------------------------------------"
@@ -143,6 +144,7 @@ fi
         chmod 755 /usr/local/sbin/hblink-stop
         chmod 755 /usr/local/sbin/hblink-start
         chmod 755 /usr/local/sbin/hblink/restart
+        chmod 755 /usr/local/sbin/hblink-initial-setup
 echo "Done."
         
 echo "------------------------------------------------------------------------------"
@@ -666,14 +668,23 @@ echo "Starting HBmon....."
         systemctl enable hbmon
         systemctl start hbmon
 figlet "HBMonV2"
+echo ""
+echo ""
+clear
+sleep 2
+echo "HBlink First Time Setup....."
+sleep 1
+figlet "WhipTAIL'"
+        hblink-initial-setup
+sleep 1
 echo "Done."
 echo ""
 echo ""
 echo "*************************************************************************"
 echo ""
-echo "                The HBlink3 Docker Install Is Complete!                  "
+echo "                 The HBlink3 Docker Install Is Complete!                 "
 echo ""
-echo "             ******* To Update run 'hblink-update *******                "
+echo "              ******* To Update run 'hblink-update *******               "
 echo ""
 echo "        Use 'docker container logs hblink' to check the status.          "
 echo "                  logs are parked in /var/log/hblink.                    "
@@ -685,10 +696,10 @@ echo "                Use the menu to edit your server / config                "
 echo "         Refur to the official HBlink Repo for more documentation        "
 echo "                 https://github.com/HBLink-org/hblink3                   "
 echo ""
-echo "              Check out the docker installer of HBlink3 here             "
+echo "             Check out the docker installer of HBlink3 here              "
 echo "            https://github.com/ShaYmez/hblink3-docker-install            "
 echo ""
-echo "                      Your IP address is $LOCAL_IP                       "
+echo "                     Your IP address is $LOCAL_IP                        "
 echo ""
 echo "              Your running on $ARC with Debian $VERSION                  "
 echo ""           
@@ -699,8 +710,6 @@ echo ""
 echo "*************************************************************************"
 echo ""
 echo ""
-echo "Entering HBlink menu....."
 sleep 1
-figlet "'WhipTAIL'"
-sleep 3
-        hblink-menu
+echo "Please reboot your machine now! Then type 'hblink-menu' to enter control menu!"
+exit 0
