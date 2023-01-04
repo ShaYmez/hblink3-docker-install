@@ -144,7 +144,7 @@ fi
         chmod 755 /usr/local/sbin/hblink-upgrade
         chmod 755 /usr/local/sbin/hblink-stop
         chmod 755 /usr/local/sbin/hblink-start
-        chmod 755 /usr/local/sbin/hblink/restart
+        chmod 755 /usr/local/sbin/hblink-restart
         chmod 755 /usr/local/sbin/hblink-initial-setup
 echo "Done."
         
@@ -467,8 +467,8 @@ PORT: 54001
 MASTER_IP: 172.16.1.1
 MASTER_PORT: 54000
 PASSPHRASE: homebrew
-CALLSIGN: W1ABC
-RADIO_ID: 312000
+CALLSIGN: M1ABC
+RADIO_ID: 2350000
 RX_FREQ: 449000000
 TX_FREQ: 444000000
 TX_POWER: 25
@@ -477,11 +477,11 @@ SLOTS: 1
 LATITUDE: 38.0000
 LONGITUDE: -095.0000
 HEIGHT: 75
-LOCATION: Anywhere, USA
-DESCRIPTION: This is a cool repeater
-URL: www.w1abc.org
-SOFTWARE_ID: 20170620
-PACKAGE_ID: MMDVM_HBlink
+LOCATION: United Kingdom
+DESCRIPTION: This is a very cool repeater
+URL: www.freestar.network
+SOFTWARE_ID: 20230103
+PACKAGE_ID: MMDVM_HBlink3
 GROUP_HANGTIME: 5
 OPTIONS:
 USE_ACL: True
@@ -499,8 +499,8 @@ PORT: 54002
 MASTER_IP: 172.16.1.1
 MASTER_PORT: 62030
 PASSPHRASE: passw0rd
-CALLSIGN: W1ABC
-RADIO_ID: 312000
+CALLSIGN: M1ABC
+RADIO_ID: 2350000
 RX_FREQ: 449000000
 TX_FREQ: 444000000
 TX_POWER: 25
@@ -509,11 +509,11 @@ SLOTS: 1
 LATITUDE: 38.0000
 LONGITUDE: -095.0000
 HEIGHT: 75
-LOCATION: Anywhere, USA
-DESCRIPTION: This is a cool repeater
+LOCATION: United Kingdom
+DESCRIPTION: This is a very cool repeater
 URL: www.w1abc.org
-SOFTWARE_ID: 20170620
-PACKAGE_ID: MMDVM_HBlink
+SOFTWARE_ID: 20230103
+PACKAGE_ID: MMDVM_HBlink3
 GROUP_HANGTIME: 5
 XLXMODULE: 4004
 USE_ACL: True
