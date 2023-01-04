@@ -712,5 +712,5 @@ echo "*************************************************************************"
 echo ""
 echo ""
 sleep 1
-echo "Please reboot your machine now! Then type 'hblink-menu' to enter control menu!"
+echo "Please reboot your machine! Thanks for using the HBlink Docker Installer!"
 exit 0
