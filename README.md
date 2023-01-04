@@ -1,5 +1,5 @@
 # HBlink3 Docker Installer
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 or 11
+This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
@@ -16,11 +16,15 @@ Docker container pre-built for multi-arch!
 This installer builds the entire server! It includes all of the dependencies needed to run HBlink3 within docker via docker-compose. The install also includes
 HBMonv2 which is a dashboard designed for HBlink3 by SP2ONG! This runs side by side, but at this time runs on the host machine. HBMonv2 is controlled by a system unit file which runs the python code on the host.
 
-This installer includes all the usual libs and packages including apache2, php and python3.
+This installer includes all the usual libs and packages including docker, apache2, php and python3. It is recommended that you 
+install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine! YOU HAVE 
+BEEN WARNED!
 
 ### Prerequisite
-System must be dabian 10 or 11.This script is is not advisable to run this installer on Debian 9. This script has been tested on most architectures but the system requires at a minimum the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+System must be dabian 10 or 11. Is not advisable to run HBlink on the latest debian platform. This script has been tested on most architectures but the system requires, at a minimum, the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+
 Note* If you get a Locale error(s) (LC_CTYPE=UTF-8, which is wrong) can happen when you login over ssh from a Mac to a linux box, and your terminal automatically sets environment variables. There's a checkbox for that. Uncheck it, and you're good to go.
+
 Make sure your system is up-to-date and pull Git from the apt repo.
 ```sh
 apt-get install -y git
@@ -31,7 +35,7 @@ apt-get install -y git
 apt update
 sudo su
 ```
-2. It is very important that the installer runs from the /opt directory. We will then want to get this repository and clone it to the /opt directory.
+2. It is very important that the installer runs from the /opt directory! We will then want to get this repository and clone it to the /opt directory.
 ```sh
 cd /opt
 git clone https://github.com/ShaYmez/hblink3-docker-install
@@ -48,15 +52,15 @@ cd hblink3-docker-install
 
 ![New HBlink Menu System](img/HBLINK_menu.png "HBlink-menu")
 
-6. Once the installation is complete you will be guided to the menu. To interact with this menu follow the on-screen
-instructions! Set up and configure your system with the new menu system! Once finihsed hit 'cancel' to exit out of the
-menu. 
+6. Once the installation is complete you will be guided to the Setup Menu. To interact with this menu follow the on-screen
+instructions! Set up and configure your system with the new menu system! Once finihsed hit 'Finish Setup & Exit' to exit out of the
+setup menu. Dont forget to reboot your machine!
 
-7. To enter the menu, type the command
+7. To enter the HBlinl control menu, type the command
 ```sh
 hblink-menu
 ```
-8. To interact with the routine scripts directly you can enter the comands directly without the use of the menu
+8. To interact with the routine scripts manually you can enter the comands directly without the use of the menu
 ```sh
 hblink-start
 hblink-stop
@@ -65,16 +69,18 @@ hblink-flush
 hblink-update
 ```
 
-9. To interact with HBlink3 manually in docker you need to enter the HBlink3 directory
+9. To interact with HBlink3 manually using docker you need to enter the HBlink3 directory
 ```sh
 cd /etc/hblink3
 ```
-10. You can only interact with HBlink3 in this directory. Use the following commands to interact with the installation.
+10. You can only interact with HBlink3 in this directory. Use the following commands to interact with the installation. We use 
+docker-compose to run the docker container!
 ```sh
 docker-compose up -d
 docker-compose down
 docker-compose restart
 docker-compose pull
+sudo nano docker-compose.yml
 ```
 11. Edit your configuration before deployment!
 ```sh
@@ -87,7 +93,7 @@ docker container logs hblink
 or
 /var/log/hblink/hblink.log
 ```
-10. Interact with HBmov2 (Dashboard engine)
+10. Interact with HBMonv2 (Dashboard engine)
 ```sh
 systemctl start|stop|restart|status hbmon
 ```
