@@ -21,7 +21,7 @@ install this on a 'clean machine'. The script is destructive and is not designed
 BEEN WARNED!
 
 ### Prerequisite
-System must be dabian 10 or 11. Is is advisable to run HBlink on the latest debian platform. This script has been tested on most architectures but the system requires, at a minimum, 1 core, 512mbmb of ram, the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+System must be dabian 10 or 11. It is advisable to run HBlink on the latest debian platform. This script has been tested on most architectures but the system requires, at a minimum, 1 core, 512mbmb of ram, the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 
 Note* If you get Locale error(s) (LC_CTYPE=UTF-8, which is wrong) can happen when you login over ssh from a Mac to a linux box, and your terminal automatically sets environment variables. There's a checkbox for that. Uncheck it, and you're good to go.
 
