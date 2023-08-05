@@ -3,7 +3,7 @@
 # Version 1.6.9 hblink3-docker-installer
 #
 ##################################################################################
-#   Copyright (C) 2021-2022 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
+#   Copyright (C) 2021-2023 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -381,7 +381,7 @@ SUBSCRIBER_FILE: subscriber_ids.json
 TGID_FILE: talkgroup_ids.json
 PEER_URL: https://radioid.net/static/rptrs.json
 SUBSCRIBER_URL: https://radioid.net/static/users.json
-STALE_DAYS: 14
+STALE_DAYS: 28
 
 # OPENBRIDGE INSTANCES - DUPLICATE SECTION FOR MULTIPLE CONNECTIONS
 # OpenBridge is a protocol originally created by DMR+ for connection between an
@@ -437,7 +437,7 @@ MAX_PEERS: 10
 EXPORT_AMBE: False
 IP:
 PORT: 54000
-PASSPHRASE: s3cr37w0rd
+PASSPHRASE: passw0rd
 GROUP_HANGTIME: 5
 USE_ACL: True
 REG_ACL: DENY:1
@@ -557,16 +557,16 @@ configuration file.
 
 BRIDGES = {
     'FREESTAR': [
-            {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 1,    'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
-#            {'SYSTEM': 'CLIENT-1',    'TS': 1, 'TGID': 3100, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
+            {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 325,    'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
+#            {'SYSTEM': 'CLIENT-1',    'TS': 1, 'TGID': 325, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
         ],
      'CQ-UK': [
-            {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 13,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
-#            {'SYSTEM': 'CLIENT-2',    'TS': 1, 'TGID': 13,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
+            {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 2351,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
+#            {'SYSTEM': 'CLIENT-2',    'TS': 1, 'TGID': 2351,   'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [3,], 'OFF': [8,10], 'RESET': []},
         ],
      'CHATTERBOX': [
-            {'SYSTEM': 'MASTER-1',    'TS': 2, 'TGID': 3129, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
-#            {'SYSTEM': 'CLIENT-2',    'TS': 2, 'TGID': 3129, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
+            {'SYSTEM': 'MASTER-1',    'TS': 2, 'TGID': 2350, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
+#            {'SYSTEM': 'CLIENT-2',    'TS': 2, 'TGID': 2350, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'NONE', 'ON': [4,], 'OFF': [7,10], 'RESET': []},
         ]
 }
 
@@ -700,9 +700,9 @@ echo ""
 echo "             Check out the docker installer of HBlink3 here              "
 echo "            https://github.com/ShaYmez/hblink3-docker-install            "
 echo ""
-echo "                     Your IP address is $LOCAL_IP                        "
+echo "                      Your IP address is $LOCAL_IP                       "
 echo ""
-echo "              Your running on $ARC with Debian $VERSION                  "
+echo "               Your running on $ARC with Debian $VERSION                 "
 echo ""           
 echo "                     Thanks for using this script.                       "
 echo "                 Copyright © 2023 Shane Daley - M0VUB                    "
