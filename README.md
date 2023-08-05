@@ -56,7 +56,7 @@ cd hblink3-docker-install
 instructions! Set up and configure your system with the new menu system! Once finihsed hit 'Finish Setup & Exit' to exit out of the
 setup menu. Dont forget to reboot your machine!
 
-7. To enter the HBlinl control menu, type the command
+7. To enter the HBlink control menu, type the command
 ```sh
 hblink-menu
 ```
