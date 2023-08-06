@@ -457,6 +457,38 @@ TGID_TS2_ACL: PERMIT:ALL
 #
 # ACLs:
 # See comments in the GLOBAL stanza
+[Parrot]
+MODE: PEER
+ENABLED: True
+LOOSE: True
+EXPORT_AMBE: False
+IP: 127.0.0.1
+PORT: 54098
+MASTER_IP: 127.0.0.1
+MASTER_PORT: 54100
+PASSPHRASE: passw0rd
+CALLSIGN: ECHO
+RADIO_ID: 9999
+RX_FREQ: 434000000
+TX_FREQ: 434000000
+TX_POWER: 10
+COLORCODE: 1
+SLOTS: 2
+LATITUDE: 33.0000
+LONGITUDE: -84.0000
+HEIGHT: 75
+LOCATION: 
+DESCRIPTION: 
+URL:
+SOFTWARE_ID: 20230806
+PACKAGE_ID: MMDVM_HBlink3
+GROUP_HANGTIME: 5
+OPTIONS:
+USE_ACL: False
+SUB_ACL: DENY:1
+TGID_TS1_ACL: PERMIT:ALL
+TGID_TS2_ACL: PERMIT:ALL
+
 [REPEATER-1]
 MODE: PEER
 ENABLED: False
@@ -556,6 +588,10 @@ configuration file.
 '''
 
 BRIDGES = {
+    '9999 Parrot': [
+            {'SYSTEM': 'MASTER-1',   'TS': 2, 'TGID': 9999, 'ACTIVE': True, 'TIMEOUT': 0, 'TO_TYPE': 'NONE',  'ON': [9999],  'OFF': [], 'RESET': []},
+#            {'SYSTEM': 'Parrot',     'TS': 2, 'TGID': 9999, 'ACTIVE': True, 'TIMEOUT': 0, 'TO_TYPE': 'NONE',  'ON': [],      'OFF': [], 'RESET': []},
+        ],
     'FREESTAR': [
             {'SYSTEM': 'MASTER-1',    'TS': 1, 'TGID': 325,    'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
 #            {'SYSTEM': 'CLIENT-1',    'TS': 1, 'TGID': 325, 'ACTIVE': True, 'TIMEOUT': 2, 'TO_TYPE': 'ON',  'ON': [2,], 'OFF': [9,10], 'RESET': []},
