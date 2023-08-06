@@ -629,6 +629,7 @@ echo "Set up logging....."
 echo "------------------------------------------------------------------------------"
         mkdir -p /var/log/hblink
         touch /var/log/hblink/hblink.log
+        touch /var/log/hblink/parrot.log
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
