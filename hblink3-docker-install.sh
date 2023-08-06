@@ -1,6 +1,6 @@
 #!/bin/bash
 # Docker version alpine-3.17
-# Version 1.6.9 hblink3-docker-installer
+# Version 20230806 hblink3-docker-installer
 #
 ##################################################################################
 #   Copyright (C) 2021-2023 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
@@ -459,7 +459,7 @@ TGID_TS2_ACL: PERMIT:ALL
 # See comments in the GLOBAL stanza
 [Parrot]
 MODE: PEER
-ENABLED: True
+ENABLED: False
 LOOSE: True
 EXPORT_AMBE: False
 IP: 127.0.0.1
@@ -629,7 +629,6 @@ echo "Set up logging....."
 echo "------------------------------------------------------------------------------"
         mkdir -p /var/log/hblink
         touch /var/log/hblink/hblink.log
-        touch /var/log/hblink/parrot.log
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
