@@ -1,4 +1,5 @@
 # HBlink3 Docker Installer
+Version 20230806 STABLE!
 This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
@@ -149,6 +150,10 @@ nano /etc/hblink3/hblink.cfg
 ```
 Scroll down to the ```[Parrot]``` stanza and edit ```ENABLED: True``` to enable.
 Next we have put an example rule in rules.py. Remove the ```#``` hashes to enable routing of the parrot.
+'''sh
+nano /etc/hblink3/rules.py
+```
+Ctrl X and hit save!
 Once done save this and enter the the HBlink control menu
 ```sh
 hblink-menu
