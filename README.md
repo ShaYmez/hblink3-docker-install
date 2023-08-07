@@ -4,6 +4,9 @@ This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debia
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
 ## Additional Features
+### NEW! Parrot built in
+Parrot is built into this install (Default disabled, see below how to enable the parrot feature!
+
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
 
@@ -128,6 +131,31 @@ MMDVM 62030-62031/udp
 OBP 62032-62050/udp
 ssh 22/tcp
 ```
+## Enable the Parrot
+This installer comes with the parrot disabled. To enable the parrot follow commands below..
+Asuming you are super user root!
+```sh
+nano /etc/hblink3/docker-compose.yml
+```
+Scroll down to the bottom of this compose file and look for ```- 'PARROT_ENABLE=0'```
+Edit this to enable the Parrot master server which will be excuted upun restart
+```sh
+- 'PARROT_ENABLE=1'
+```
+Ctrl X and save!
+Now lets enable the peer to connect to the master in our config...
+```sh
+nano /etc/hblink3/hblink.cfg
+```
+Scroll down to the ```[Parrot]``` stanza and edit ```ENABLED: True``` to enable.
+Next we have put an example rule in rules.py. Remove the ```#``` hashes to enable routing of the parrot.
+Once done save this and enter the the HBlink control menu
+```sh
+hblink-menu
+```
+Select option 4 "Update HBlinlk / Docker
+Watch the terminal for any errors while bringing up the project! You can use the parrot on TG9999 (Default) or edit for your own tastes!
+
 ### Postrequisite
 Make sure you have properly configured your firewall!!! If using Vultr servers they come default with full firewall blockade! For initial testing
 disable the firewall! 
