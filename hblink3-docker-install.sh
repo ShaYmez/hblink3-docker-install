@@ -130,7 +130,7 @@ echo "--------------------------------------------------------------------------
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
 
-         elif [ $VERSION = bookwork/sid ];
+         elif [ $VERSION = bookworm/sid ];
         then
                 apt-get update
                 apt-get install -y $DEP2
