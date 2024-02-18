@@ -60,6 +60,7 @@ HBMONDIR=/opt/HBMonv2/
 HBDIR=/etc/hblink3/
 DEP="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 DEP1="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
+DEP2="wget sudo curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php php-mysqli snapd figlet ca-certificates gnupg lsb-release"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
 HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
 echo ""
@@ -107,6 +108,49 @@ echo "--------------------------------------------------------------------------
                 figlet "docker.io"
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+                
+        elif [ $VERSION = 12 ];
+        then
+                apt-get update
+                apt-get install -y $DEP2
+                sleep 2
+                apt-get remove docker docker-engine docker.io containerd runc
+                curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+                
+                echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                
+                apt-get update
+                apt-get install -y docker-ce docker-ce-cli containerd.io
+                apt-get install -y docker-compose
+                systemctl enable docker
+                systemctl start docker
+                figlet "docker.io"
+                echo Set userland-proxy to false...
+                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+
+         elif [ $VERSION = bookwork/sid ];
+        then
+                apt-get update
+                apt-get install -y $DEP2
+                sleep 2
+                apt-get remove docker docker-engine docker.io containerd runc
+                curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+                
+                echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                
+                apt-get update
+                apt-get install -y docker-ce docker-ce-cli containerd.io
+                apt-get install -y docker-compose
+                systemctl enable docker
+                systemctl start docker
+                figlet "docker.io"
+                echo Set userland-proxy to false...
+                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json       
+                
         else
         echo "-------------------------------------------------------------------------------------------"
         echo "Operating system not supported! Please check your configuration or upgrade. Exiting....."
