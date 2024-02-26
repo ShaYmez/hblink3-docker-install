@@ -1,6 +1,6 @@
 #!/bin/bash
 # Docker version alpine-3.17
-# Version 20230806 hblink3-docker-installer
+# Version 20230806 hblink3-docker-installer v1.0.0
 #
 ##################################################################################
 #   Copyright (C) 2021-2023 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
