@@ -1,5 +1,5 @@
 # HBlink3 Docker Installer
-Version 20230806 STABLE!
+Development branch for version 2 (Dockerised HBMonv2)
 This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
