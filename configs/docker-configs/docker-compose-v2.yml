@@ -1,0 +1,51 @@
+version: '2.4'
+services:
+    hblink3:
+        container_name: hblink
+        volumes:
+            - '/etc/hblink3/hblink.cfg:/opt/hblink3/hblink.cfg'
+            - '/var/log/hblink/hblink.log:/opt/hblink3/hblink.log'
+            - '/etc/hblink3/rules.py:/opt/hblink3/rules.py'
+            # Write JSON outside of container
+            - '/etc/hblink3/json/:/opt/hblink3/json/'
+        ports:
+               # Master Ports (99 Masters)
+            - '54000-54099:54000-54099/udp'
+               # MMDVM & OBP Ports
+            - '62030-62050:62030-62050/udp'
+               # TCP Port for HBmonv2 (Disabled by default unless running off site)
+            #- '4321:4321/tcp'
+        image: 'shaymez/hblink3:latest'
+        restart: "unless-stopped"
+        networks:
+           app_net:
+             ipv4_address: 172.16.238.10
+        read_only: "true"
+        environment:
+            - 'PARROT_ENABLE=1'
+    hbmon:
+        container_name: hbmon
+        working_dir: /hbmon
+        volumes:
+            - '/etc/hblink3/hbmon-config.py:/hbmon/hbmon-config.py'
+            - '/var/log/hblink/hbmon.log:/hbmon/log/hbmon.log'
+            - '/etc/hblink3/json/subscriber_ids.json:/monitor/data/subscriber_ids.json'
+            - '/etc/hblink3/json/peer_ids.json:/monitor/data/peer_ids.json'
+            - '/etc/hblink3/json/talkgroup_ids.json:/monitor/data/talkgroup_ids.json'
+        ports:
+            - '9000:9000'
+        image: 'shaymez/HBmonv2:latest'
+        restart: "unless-stopped"
+        depends_on:
+            - 'hblink3'
+        networks:
+            app_net:
+              ipv4_address: 172.16.238.20
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1           
