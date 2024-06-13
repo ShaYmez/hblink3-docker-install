@@ -251,15 +251,16 @@ then
 fi
 echo "Done"
 
-sleep 2
+echo ""
+echo ""
 echo "------------------------------------------------------------------------------"
-echo "Installing RYMonv3 HTML Dashboard....."
+echo "Installing HBMonv2 HTML Dashboard....."
 echo "------------------------------------------------------------------------------"
 sleep 2
+                cd /var/www/html/
                 mv /var/www/html/index.html /var/www/html/index_APACHE.html
-                cp -a html/. /var/www/html/
-                
-if [ -e /var/www/html/moni.php ]
+                cp -a /opt/HBMonv2/html/. /var/www/html/
+if [ -e info.php ]
 then
         echo "------------------------------------------------------------------------------------"
         echo "It looks like the dashboard installed correctly. The installation will now proceed. "
