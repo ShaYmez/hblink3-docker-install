@@ -33,7 +33,7 @@ fi
 if [ ! -e "/etc/debian_version" ]
 then
   echo ""
-  echo "This script is only tested in Debian 9,10 & 11 repo only."
+  echo "This script is only tested in Debian 10,11 & 12 repo only."
   exit 0
 fi
 DIRDIR=$(pwd)
@@ -47,13 +47,13 @@ X32=https://get.docker.com | sh
 X64=https://get.docker.com | sh
 INSDIR=/opt/tmp/
 HBLINKTMP=/opt/tmp/hblink3
-HBMONDIR=/opt/HBMonv2/
+HBMONDIR=/opt/RYMonv2/
 HBDIR=/etc/hblink3/
 DEP="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 DEP1="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 DEP2="wget sudo curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php php-mysqli snapd figlet ca-certificates gnupg lsb-release"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
-HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
+HBGITMONREPO=https://github.com/ShaYmez/RYMonv2.git
 echo ""
 echo "------------------------------------------------------------------------------"
 echo "Downloading and installing required software & dependencies....."
@@ -182,110 +182,10 @@ fi
         chmod 755 /usr/local/sbin/hblink-restart
         chmod 755 /usr/local/sbin/hblink-initial-setup
 echo "Done."
-        
-echo "------------------------------------------------------------------------------"
-echo "Downloading and installing HBMonv2 Dashboard....."
-echo "------------------------------------------------------------------------------"
-sleep 2
-cd /opt/
-mkdir -p tmp
-chmod 0755 /opt/tmp/
-cd /opt/
-git clone $HBGITMONREPO
-cd $HBMONDIR
-if [ -e monitor.py ]
-then
-        echo "--------------------------------------------------------------------------------"
-        echo "It looks like HBMonitor installed correctly. The installation will now proceed. "
-        echo "--------------------------------------------------------------------------------"
-        else
-        echo "-------------------------------------------------------------------------------------------"
-        echo "I dont see HBMonitor installed! Please check your configuration and try again. Exiting....."
-        echo "-------------------------------------------------------------------------------------------"
-        exit 0
-fi
-echo "Done."
-echo ""
-echo ""
-echo "------------------------------------------------------------------------------"
-echo "Installing HBMonv2 configuration....."
-echo "------------------------------------------------------------------------------"
-sleep 2
-                pip3 install setuptools wheel
-                pip3 install -r requirements.txt
-                pip3 install attrs --force
-        echo Install /opt/HBMonv2/config.py ...
-cat << EOF > /opt/HBMonv2/config.py
-CONFIG_INC      = True                           # Include HBlink stats
-HOMEBREW_INC    = True                           # Display Homebrew Peers status
-LASTHEARD_INC   = True                           # Display lastheard table on main page
-BRIDGES_INC     = False                          # Display Bridge status and button
-EMPTY_MASTERS   = False                          # Display Enable (True) or DISABLE (False) empty masters in status
-#
-HBLINK_IP       = '127.0.0.1'                    # HBlink's IP Address
-HBLINK_PORT     = 4321                           # HBlink's TCP reporting socket
-FREQUENCY       = 10                             # Frequency to push updates to web clients
-CLIENT_TIMEOUT  = 0                              # Clients are timed out after this many seconds, 0 to disable
-
-# Generally you don't need to use this but
-# if you don't want to show in lastherad received traffic from OBP link put NETWORK ID 
-# for example: "260210,260211,260212"
-OPB_FILTER = ""
-
-# Files and stuff for loading alias files for mapping numbers to names
-PATH            = './'                           # MUST END IN '/'
-PEER_FILE       = 'peer_ids.json'                # Will auto-download 
-SUBSCRIBER_FILE = 'subscriber_ids.json'          # Will auto-download 
-TGID_FILE       = 'talkgroup_ids.json'           # User provided
-LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # User provided (optional, leave '' if you don't use it)
-LOCAL_PEER_FILE = 'local_peer_ids.json'          # User provided (optional, leave '' if you don't use it)
-LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # User provided (optional, leave '' if you don't use it)
-FILE_RELOAD     = 14                             # Number of days before we reload DMR-MARC database files
-PEER_URL        = 'https://radioid.net/static/rptrs.json'
-SUBSCRIBER_URL  = 'https://radioid.net/static/users.json'
-
-# Settings for log files
-LOG_PATH        = './log/'             # MUST END IN '/'
-LOG_NAME        = 'hbmon.log'
-EOF
-                cp utils/hbmon.service /lib/systemd/system/
-                cp utils/lastheard /etc/cron.daily/
-                chmod +x /etc/cron.daily/lastheard
-echo ""
-echo ""
-echo "------------------------------------------------------------------------------"
-echo "Installing HBMonv2 HTML Dashboard....."
-echo "------------------------------------------------------------------------------"
-sleep 2
-                cd /var/www/html/
-                mv /var/www/html/index.html /var/www/html/index_APACHE.html
-                cp -a /opt/HBMonv2/html/. /var/www/html/
-if [ -e info.php ]
-then
-        echo "------------------------------------------------------------------------------------"
-        echo "It looks like the dashboard installed correctly. The installation will now proceed. "
-        echo "------------------------------------------------------------------------------------"
-        else
-        echo "-----------------------------------------------------------------------------------------------"
-        echo "I dont see the dashboard installed! Please check your configuration and try again. Exiting....."
-        echo "-----------------------------------------------------------------------------------------------"
-        exit 0
-fi
-echo "Done."
-
-echo "Install crontab..."
-cat << EOF > /etc/cron.daily/lastheard
-#!/bin/bash
-mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
-/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
-mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
-/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
-EOF
-chmod 755 /etc/cron.daily/lastheard
 
 sleep 2
 echo "------------------------------------------------------------------------------"
-echo "Installing HBlink3 configuration dirs....."
+echo "Installing configuration dirs....."
 echo "------------------------------------------------------------------------------"
 sleep 2
          echo Restart docker...
@@ -305,6 +205,73 @@ sleep 2
          curl https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json
          curl https://radioid.net/static/rptrs.json -o peer_ids.json
 echo "Done"
+        
+echo "------------------------------------------------------------------------------"
+echo "Downloading and installing RYMonv3 Dashboard....."
+echo "------------------------------------------------------------------------------"
+sleep 2
+cd /opt/
+mkdir -p tmp
+chmod 0755 /opt/tmp/
+cd /opt/
+git clone $HBGITMONREPO
+cd $HBMONDIR
+if [ -e monitor.py ]
+then
+        echo "--------------------------------------------------------------------------------"
+        echo "It looks like we pulled RYMonv3. The installation will now proceed. "
+        echo "--------------------------------------------------------------------------------"
+        else
+        echo "-------------------------------------------------------------------------------------------"
+        echo "I dont see RYMonv3 cloned! Please check your configuration and try again. Exiting....."
+        echo "-------------------------------------------------------------------------------------------"
+        exit 0
+fi
+echo "Done."
+
+sleep 2
+echo ""
+echo ""
+echo "--------------------------------------"
+echo "Installing RYMonv3 configuration....."
+echo "--------------------------------------"
+sleep 2
+        cp rymon.cfg /etc/hblink3/rymon.cfg
+
+if [ -e /etc/hblink3/rymon.cfg ]
+then
+        echo "-----------------------------------------------------------------------------------------"
+        echo "It looks like the RYMonv3 files installed correctly. The installation will now proceed. "
+        echo "-----------------------------------------------------------------------------------------"
+        else
+        echo "------------------------------------------------------------------------------------------"
+        echo "I dont see the RYMonv3 files! Please check your configuration and try again. Exiting....."
+        echo "------------------------------------------------------------------------------------------"
+        exit 0
+fi
+echo "Done"
+
+sleep 2
+echo "------------------------------------------------------------------------------"
+echo "Installing RYMonv3 HTML Dashboard....."
+echo "------------------------------------------------------------------------------"
+sleep 2
+                mv /var/www/html/index.html /var/www/html/index_APACHE.html
+                cp -a html/. /var/www/html/
+                
+if [ -e /var/www/html/moni.php ]
+then
+        echo "------------------------------------------------------------------------------------"
+        echo "It looks like the dashboard installed correctly. The installation will now proceed. "
+        echo "------------------------------------------------------------------------------------"
+        else
+        echo "-----------------------------------------------------------------------------------------------"
+        echo "I dont see the dashboard installed! Please check your configuration and try again. Exiting....."
+        echo "-----------------------------------------------------------------------------------------------"
+        exit 0
+fi
+echo "Done."
+
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
