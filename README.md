@@ -1,14 +1,16 @@
 # HBlink3 Docker Installer
 Debian 10 / 11 only!!
-FIXING ISSUES
 =======
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11. The HBMonv2 dashboard is currently not supported on debian 12 at this time!!
+This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11. The HBMonv2 dashboard is not currently supported on debian 12 at this time!!
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
 ## Additional Features
 ### NEW! Parrot built in
 Parrot is built into this install (Default disabled, see below how to enable the parrot feature!
+
+### Destructive Installer
+This is a destructive installer and is recomended to be built on a freshly installed machine running Debian 10 or 11. Please note this installer will not work on Debian 12 Bookworm!!
 
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
@@ -19,15 +21,13 @@ Docker container pre-built for multi-arch!
 * ppc64
 * lots more!
 
-This installer builds the entire server! It includes all of the dependencies needed to run HBlink3 within docker via docker-compose. The install also includes
-HBMonv2 which is a dashboard designed for HBlink3 by SP2ONG! This runs side by side, but at this time runs on the host machine. HBMonv2 is controlled by a system unit file which runs the python code on the host.
+This installer builds the entire HBlink server! It includes all of the dependencies needed to run HBlink3 within docker via docker-compose. The install also includes HBMonv2, which is a dashboard designed for HBlink3 by SP2ONG! This runs side by side, but at this time runs on the host machine using Systemd. HBMonv2 is controlled by a system unit file which runs the python code on the host.
 
 This installer includes all the usual libs and packages including docker, apache2, php and python3. It is recommended that you 
-install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine! YOU HAVE 
-BEEN WARNED!
+install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine that has other software on it! YOU HAVE BEEN WARNED!
 
 ### Prerequisite
-System must be dabian 10 or 11. It is advisable to run HBlink on the latest debian platform. This script has been tested on most architectures but the system requires, at a minimum, 1 core, 512mbmb of ram, the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+The host system must be running dabian 10 or 11. Although this software may run on the latest debian platform, this installer has only been tested on debian 10 and 11. The installer may fail due to pip/python changes in debian 12. This script has been tested on most architectures but the system requires, at a minimum; 1 core, 512mbmb of ram, the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 
 Note* If you get Locale error(s) (LC_CTYPE=UTF-8, which is wrong) can happen when you login over ssh from a Mac to a linux box, and your terminal automatically sets environment variables. There's a checkbox for that. Uncheck it, and you're good to go.
 
@@ -36,31 +36,30 @@ Make sure your system is up-to-date and pull Git from the apt repo.
 apt-get install -y git
 ```
 ### Installation
-1. Have preferably a clean Dabian 10 or 11 system. Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
+1. Preferably a clean Dabian 10 or 11 system. Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
 ```sh
 apt update
 sudo su
 ```
-2. It is very important that the installer runs from the /opt directory! We will then want to get this repository and clone it to the /opt directory.
+2. It is very important that the installer runs from the /opt directory! We will then want to get this repository and git clone it to the /opt directory.
 ```sh
 cd /opt
 git clone https://github.com/ShaYmez/hblink3-docker-install
 ```
-3. Now cd in to the cloned repo and execute the install script. No need to chmod as permissions are already satisfied.
+3. Now enter in to the cloned repo and execute the install script. No need to chmod as permissions are already satisfied.
 ```sh
 cd hblink3-docker-install
 ./hblink3-docker-install.sh
 ```
 4. follow the install and any prompts! It it will prompt you for kernel updates if neccassary.
-5. Once the installation is complete it is recommended to reboot the machine.
+5. Once the installation is complete you will be presented with the first time run menu. Edit your config or exit to complete setup.
 
 ### New Menu System released with this installer!
 
 ![New HBlink Menu System](img/HBLINK_menu.png "HBlink-menu")
 
 6. Once the installation is complete you will be guided to the Setup Menu. To interact with this menu follow the on-screen
-instructions! Set up and configure your system with the new menu system! Once finihsed hit 'Finish Setup & Exit' to exit out of the
-setup menu. Dont forget to reboot your machine!
+instructions! Set up and configure your system with the new menu system! Once finihsed hit 'Finish Setup & Exit' to exit out of the setup menu.
 
 7. To enter the HBlink control menu, type the command
 ```sh
@@ -106,7 +105,7 @@ systemctl start|stop|restart|status hbmon
 
 ![New HBMonv2 Banner](img/HBLINK_logoV2.png "HBMonv2")
 
-Within this installtion includes the new HBMonv2 by Weldek SP2ONG
+Within this installation includes the new HBMonv2 by Weldek SP2ONG
 * Better dashboard for monitoring per page
 * Python build	
 * Websocket connection to web interface	
