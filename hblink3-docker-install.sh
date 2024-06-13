@@ -1,6 +1,6 @@
 #!/bin/bash
 # Docker version alpine-3.17
-# Version 20230806 hblink3-docker-installer v1.0.1
+# Version 20230806 hblink3-docker-installer
 #
 ##################################################################################
 #   Copyright (C) 2021-2023 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
@@ -21,8 +21,17 @@
 ##################################################################################
 #
 # A tool to install HBlink3 Docker with Debian / Ubuntu support.
-# Initial script for moving over to dockerised dashboard!!
-#
+# This essentially is a HBlink3 server fully installed with dashboard / SSL ready to go.
+# Step 1: Install Debian 10 or 11 or Ubuntu 20.04 onwards.. and make sure it has internet and is up to date.
+# Step 2: Run this script on the computer.
+# Step 4: Reboot after installation.
+# This is a docker version and you can use the following comands to control / maintain your server
+# cd /etc/hblink3
+# docker-compose up -d (starts the hblink3 docker container)
+# docker-compose down (shuts down the hblink container and stops the service)
+# docker-compose pull (updates the container to the latest docker image)
+# systemctl |stop|start|restart|status hbmon (controls the HBMonv2 dash service)
+# logs can be found in var/log/hblink or docker comand "docker container logs hblink"
 #Lets begin-------------------------------------------------------------------------------------------------
 if [ "$EUID" -ne 0 ];
 then
@@ -33,7 +42,7 @@ fi
 if [ ! -e "/etc/debian_version" ]
 then
   echo ""
-  echo "This script is only tested in Debian 10,11 & 12 repo only."
+  echo "This script is only tested in Debian 9,10 & 11 repo only."
   exit 0
 fi
 DIRDIR=$(pwd)
@@ -121,7 +130,7 @@ echo "--------------------------------------------------------------------------
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
 
-         elif [ $VERSION = null ];
+         elif [ $VERSION = bookworm/sid ];
         then
                 apt-get update
                 apt-get install -y $DEP2
@@ -182,29 +191,6 @@ fi
         chmod 755 /usr/local/sbin/hblink-restart
         chmod 755 /usr/local/sbin/hblink-initial-setup
 echo "Done."
-
-sleep 2
-echo "------------------------------------------------------------------------------"
-echo "Installing configuration dirs....."
-echo "------------------------------------------------------------------------------"
-sleep 2
-         echo Restart docker...
-         systemctl restart docker
-         sleep 3
-
-         echo Make config directory...
-         mkdir -p /etc/hblink3
-         chmod 0755 /etc/hblink3
-
-         echo make json directory...
-         mkdir -p /etc/hblink3/json/
-
-         echo get json files...
-         cd /etc/hblink3/json
-         curl https://radioid.net/static/users.json -o subscriber_ids.json
-         curl https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json
-         curl https://radioid.net/static/rptrs.json -o peer_ids.json
-echo "Done"
         
 echo "------------------------------------------------------------------------------"
 echo "Downloading and installing HBMonv2 Dashboard....."
@@ -219,38 +205,61 @@ cd $HBMONDIR
 if [ -e monitor.py ]
 then
         echo "--------------------------------------------------------------------------------"
-        echo "It looks like we pulled HBMonv2. The installation will now proceed. "
+        echo "It looks like HBMonitor installed correctly. The installation will now proceed. "
         echo "--------------------------------------------------------------------------------"
         else
         echo "-------------------------------------------------------------------------------------------"
-        echo "I dont see HBMonv2 cloned! Please check your configuration and try again. Exiting....."
+        echo "I dont see HBMonitor installed! Please check your configuration and try again. Exiting....."
         echo "-------------------------------------------------------------------------------------------"
         exit 0
 fi
 echo "Done."
-
-sleep 2
 echo ""
 echo ""
-echo "--------------------------------------"
+echo "------------------------------------------------------------------------------"
 echo "Installing HBMonv2 configuration....."
-echo "--------------------------------------"
+echo "------------------------------------------------------------------------------"
 sleep 2
-        cp config.py /etc/hblink3/config.py
+                pip3 install setuptools wheel
+                pip3 install -r requirements.txt
+                pip3 install attrs --force
+        echo Install /opt/HBMonv2/config.py ...
+cat << EOF > /opt/HBMonv2/config.py
+CONFIG_INC      = True                           # Include HBlink stats
+HOMEBREW_INC    = True                           # Display Homebrew Peers status
+LASTHEARD_INC   = True                           # Display lastheard table on main page
+BRIDGES_INC     = False                          # Display Bridge status and button
+EMPTY_MASTERS   = False                          # Display Enable (True) or DISABLE (False) empty masters in status
+#
+HBLINK_IP       = '127.0.0.1'                    # HBlink's IP Address
+HBLINK_PORT     = 4321                           # HBlink's TCP reporting socket
+FREQUENCY       = 10                             # Frequency to push updates to web clients
+CLIENT_TIMEOUT  = 0                              # Clients are timed out after this many seconds, 0 to disable
 
-if [ -e /etc/hblink3/config.py ]
-then
-        echo "-----------------------------------------------------------------------------------------"
-        echo "It looks like the HBMonv2 files installed correctly. The installation will now proceed. "
-        echo "-----------------------------------------------------------------------------------------"
-        else
-        echo "------------------------------------------------------------------------------------------"
-        echo "I dont see the HBMonv2 files! Please check your configuration and try again. Exiting....."
-        echo "------------------------------------------------------------------------------------------"
-        exit 0
-fi
-echo "Done"
+# Generally you don't need to use this but
+# if you don't want to show in lastherad received traffic from OBP link put NETWORK ID 
+# for example: "260210,260211,260212"
+OPB_FILTER = ""
 
+# Files and stuff for loading alias files for mapping numbers to names
+PATH            = './'                           # MUST END IN '/'
+PEER_FILE       = 'peer_ids.json'                # Will auto-download 
+SUBSCRIBER_FILE = 'subscriber_ids.json'          # Will auto-download 
+TGID_FILE       = 'talkgroup_ids.json'           # User provided
+LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # User provided (optional, leave '' if you don't use it)
+LOCAL_PEER_FILE = 'local_peer_ids.json'          # User provided (optional, leave '' if you don't use it)
+LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # User provided (optional, leave '' if you don't use it)
+FILE_RELOAD     = 14                             # Number of days before we reload DMR-MARC database files
+PEER_URL        = 'https://radioid.net/static/rptrs.json'
+SUBSCRIBER_URL  = 'https://radioid.net/static/users.json'
+
+# Settings for log files
+LOG_PATH        = './log/'             # MUST END IN '/'
+LOG_NAME        = 'hbmon.log'
+EOF
+                cp utils/hbmon.service /lib/systemd/system/
+                cp utils/lastheard /etc/cron.daily/
+                chmod +x /etc/cron.daily/lastheard
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
@@ -273,6 +282,38 @@ then
 fi
 echo "Done."
 
+echo "Install crontab..."
+cat << EOF > /etc/cron.daily/lastheard
+#!/bin/bash
+mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
+/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
+mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
+/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
+EOF
+chmod 755 /etc/cron.daily/lastheard
+
+sleep 2
+echo "------------------------------------------------------------------------------"
+echo "Installing HBlink3 configuration dirs....."
+echo "------------------------------------------------------------------------------"
+sleep 2
+         echo Restart docker...
+         systemctl restart docker
+         sleep 3
+
+         echo Make config directory...
+         mkdir -p /etc/hblink3
+         chmod 0755 /etc/hblink3
+
+         echo make json directory...
+         mkdir -p /etc/hblink3/json/
+
+         echo get json files...
+         cd /etc/hblink3/json
+         curl https://radioid.net/static/users.json -o subscriber_ids.json
+         curl https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json
+         curl https://radioid.net/static/rptrs.json -o peer_ids.json
+echo "Done"
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
