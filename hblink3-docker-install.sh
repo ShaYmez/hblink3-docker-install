@@ -47,13 +47,13 @@ X32=https://get.docker.com | sh
 X64=https://get.docker.com | sh
 INSDIR=/opt/tmp/
 HBLINKTMP=/opt/tmp/hblink3
-HBMONDIR=/opt/RYMonv3/
+HBMONDIR=/opt/HBMonv2/
 HBDIR=/etc/hblink3/
 DEP="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 DEP1="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 DEP2="wget sudo curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php php-mysqli snapd figlet ca-certificates gnupg lsb-release"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
-HBGITMONREPO=https://github.com/ShaYmez/RYMonv3.git
+HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
 echo ""
 echo "------------------------------------------------------------------------------"
 echo "Downloading and installing required software & dependencies....."
@@ -207,7 +207,7 @@ sleep 2
 echo "Done"
         
 echo "------------------------------------------------------------------------------"
-echo "Downloading and installing RYMonv3 Dashboard....."
+echo "Downloading and installing HBMonv2 Dashboard....."
 echo "------------------------------------------------------------------------------"
 sleep 2
 cd /opt/
@@ -219,11 +219,11 @@ cd $HBMONDIR
 if [ -e monitor.py ]
 then
         echo "--------------------------------------------------------------------------------"
-        echo "It looks like we pulled RYMonv3. The installation will now proceed. "
+        echo "It looks like we pulled HBMonv2. The installation will now proceed. "
         echo "--------------------------------------------------------------------------------"
         else
         echo "-------------------------------------------------------------------------------------------"
-        echo "I dont see RYMonv3 cloned! Please check your configuration and try again. Exiting....."
+        echo "I dont see HBMonv2 cloned! Please check your configuration and try again. Exiting....."
         echo "-------------------------------------------------------------------------------------------"
         exit 0
 fi
@@ -233,19 +233,19 @@ sleep 2
 echo ""
 echo ""
 echo "--------------------------------------"
-echo "Installing RYMonv3 configuration....."
+echo "Installing HBMonv2 configuration....."
 echo "--------------------------------------"
 sleep 2
-        cp rymon.cfg /etc/hblink3/rymon.cfg
+        cp hbmon.cfg /etc/hblink3/hbmon.cfg
 
-if [ -e /etc/hblink3/rymon.cfg ]
+if [ -e /etc/hblink3/hbmon.cfg ]
 then
         echo "-----------------------------------------------------------------------------------------"
-        echo "It looks like the RYMonv3 files installed correctly. The installation will now proceed. "
+        echo "It looks like the HBMonv2 files installed correctly. The installation will now proceed. "
         echo "-----------------------------------------------------------------------------------------"
         else
         echo "------------------------------------------------------------------------------------------"
-        echo "I dont see the RYMonv3 files! Please check your configuration and try again. Exiting....."
+        echo "I dont see the HBMonv2 files! Please check your configuration and try again. Exiting....."
         echo "------------------------------------------------------------------------------------------"
         exit 0
 fi
