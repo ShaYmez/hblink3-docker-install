@@ -1,9 +1,8 @@
 # HBlink3 Docker Installer
-STILL IN DEVELOPMENT!!!!
+Debian 10 / 11 only!!
 FIXING ISSUES
 =======
-Development branch for version 2 (Dockerised HBMonv2)
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11
+This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11. The HBMonv2 dashboard is currently not supported on debian 12 at this time!!
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
