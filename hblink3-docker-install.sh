@@ -236,9 +236,9 @@ echo "--------------------------------------"
 echo "Installing HBMonv2 configuration....."
 echo "--------------------------------------"
 sleep 2
-        cp hbmon.cfg /etc/hblink3/hbmon.cfg
+        cp config.py /etc/hblink3/config.py
 
-if [ -e /etc/hblink3/hbmon.cfg ]
+if [ -e /etc/hblink3/config.py ]
 then
         echo "-----------------------------------------------------------------------------------------"
         echo "It looks like the HBMonv2 files installed correctly. The installation will now proceed. "
