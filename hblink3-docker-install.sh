@@ -1,9 +1,9 @@
 #!/bin/bash
 # Docker version alpine-3.17
-# Version 20230806 hblink3-docker-installer
+# Version 14052024 hblink3-docker-installer
 #
 ##################################################################################
-#   Copyright (C) 2021-2023 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
+#   Copyright (C) 2021-2024 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 #   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ##################################################################################
 #
-# A tool to install HBlink3 Docker with Debian / Ubuntu support.
-# This essentially is a HBlink3 server fully installed with dashboard / SSL ready to go.
-# Step 1: Install Debian 10 or 11 or Ubuntu 20.04 onwards.. and make sure it has internet and is up to date.
+# A tool to install HBlink3 Docker with Debian 10-11 / Ubuntu 20.04 support.
+# This essentially is a HBlink3 server fully installed with dashboard ready to go.
+# Step 1: Install Debian 10 or 11 or Ubuntu 20.04 and make sure it has internet and is up to date.
 # Step 2: Run this script on the computer.
 # Step 4: Reboot after installation.
 # This is a docker version and you can use the following comands to control / maintain your server
@@ -88,6 +88,7 @@ echo "--------------------------------------------------------------------------
                 figlet "docker.io"
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+                
         elif [ $VERSION = 11 ];
         then
                 apt-get update
@@ -108,52 +109,10 @@ echo "--------------------------------------------------------------------------
                 figlet "docker.io"
                 echo Set userland-proxy to false...
                 echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
-                
-        elif [ $VERSION = 12 ];
-        then
-                apt-get update
-                apt-get install -y $DEP2
-                sleep 2
-                apt-get remove docker docker-engine docker.io containerd runc
-                curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-                
-                echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
-                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-                
-                apt-get update
-                apt-get install -y docker-ce docker-ce-cli containerd.io
-                apt-get install -y docker-compose
-                systemctl enable docker
-                systemctl start docker
-                figlet "docker.io"
-                echo Set userland-proxy to false...
-                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
-
-         elif [ $VERSION = bookworm/sid ];
-        then
-                apt-get update
-                apt-get install -y $DEP2
-                sleep 2
-                apt-get remove docker docker-engine docker.io containerd runc
-                curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-                
-                echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
-                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-                
-                apt-get update
-                apt-get install -y docker-ce docker-ce-cli containerd.io
-                apt-get install -y docker-compose
-                systemctl enable docker
-                systemctl start docker
-                figlet "docker.io"
-                echo Set userland-proxy to false...
-                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json       
-                
+                                
         else
         echo "-------------------------------------------------------------------------------------------"
-        echo "Operating system not supported! Please check your configuration or upgrade. Exiting....."
+        echo "Operating system not supported! Please check your running debian 10 or 11. Exiting....."
         echo "-------------------------------------------------------------------------------------------"
         exit 0
 fi
@@ -774,7 +733,7 @@ echo "  You will need to edit your config and then run the following command   "
 echo ""
 echo "                    Type 'hblink-menu' for main menu                     "
 echo "                Use the menu to edit your server / config                "
-echo "         Refur to the official HBlink Repo for more documentation        "
+echo "        Refer to the official HBlink Repo for more documentation         "
 echo "                 https://github.com/HBLink-org/hblink3                   "
 echo ""
 echo "             Check out the docker installer of HBlink3 here              "
@@ -785,12 +744,12 @@ echo ""
 echo "               Your running on $ARC with Debian $VERSION                 "
 echo ""           
 echo "                     Thanks for using this script.                       "
-echo "                 Copyright © 2023 Shane Daley - M0VUB                    "
+echo "                 Copyright © 2024 Shane Daley - M0VUB                    "
 echo "   More information can be found @ https://freestar.network/development  "
 echo ""
 echo "*************************************************************************"
 echo ""
 echo ""
 sleep 1
-echo "Please reboot your machine! Thanks for using the HBlink Docker Installer!"
+echo "Thanks for using the HBlink Docker Installer!"
 exit
