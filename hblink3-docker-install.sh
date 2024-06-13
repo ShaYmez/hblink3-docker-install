@@ -53,7 +53,7 @@ DEP="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev co
 DEP1="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 DEP2="wget sudo curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php php-mysqli snapd figlet ca-certificates gnupg lsb-release"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
-HBGITMONREPO=https://github.com/ShaYmez/RYMonv2.git
+HBGITMONREPO=https://github.com/ShaYmez/RYMonv3.git
 echo ""
 echo "------------------------------------------------------------------------------"
 echo "Downloading and installing required software & dependencies....."
