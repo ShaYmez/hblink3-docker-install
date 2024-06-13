@@ -21,17 +21,8 @@
 ##################################################################################
 #
 # A tool to install HBlink3 Docker with Debian / Ubuntu support.
-# This essentially is a HBlink3 server fully installed with dashboard / SSL ready to go.
-# Step 1: Install Debian 10 or 11 or Ubuntu 20.04 onwards.. and make sure it has internet and is up to date.
-# Step 2: Run this script on the computer.
-# Step 4: Reboot after installation.
-# This is a docker version and you can use the following comands to control / maintain your server
-# cd /etc/hblink3
-# docker-compose up -d (starts the hblink3 docker container)
-# docker-compose down (shuts down the hblink container and stops the service)
-# docker-compose pull (updates the container to the latest docker image)
-# systemctl |stop|start|restart|status hbmon (controls the HBMonv2 dash service)
-# logs can be found in var/log/hblink or docker comand "docker container logs hblink"
+# Initial script for moving over to dockerised dashboard!!
+#
 #Lets begin-------------------------------------------------------------------------------------------------
 if [ "$EUID" -ne 0 ];
 then
