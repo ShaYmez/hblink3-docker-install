@@ -1,6 +1,6 @@
 #!/bin/bash
-# Docker version alpine-3.17
-# Version 14052024 hblink3-docker-installer
+# Docker version alpine-3.18
+# Version 14112024 hblink3-docker-installer
 #
 ##################################################################################
 #   Copyright (C) 2021-2024 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
@@ -745,7 +745,7 @@ echo "               Your running on $ARC with Debian $VERSION                 "
 echo ""           
 echo "                     Thanks for using this script.                       "
 echo "                 Copyright © 2024 Shane Daley - M0VUB                    "
-echo "   More information can be found @ https://freestar.network/development  "
+echo "      More information can be found @ https://github.com/shaymez/        "
 echo ""
 echo "*************************************************************************"
 echo ""
