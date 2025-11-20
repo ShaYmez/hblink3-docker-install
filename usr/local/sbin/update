@@ -19,7 +19,7 @@
 
 # Update containers / service clean/truncate/ and restart of services..
 
-LOCAL_IP=$(ip a | grep inet | grep "ens18\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
+LOCAL_IP=$(ip a | grep inet | grep "eth0\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
 ARC=$(lscpu | grep Arch | awk '{print $2}')
 VERSION=$(sed 's/\..*//' /etc/debian_version)
 
@@ -57,7 +57,7 @@ echo "  You will need to edit your config and then run the following command   "
 echo ""
 echo "                    Type 'hblink-menu' for main menu                     "
 echo "                Use the menu to edit your server / config                "
-echo "         Refur to the official HBlink Repo for more documentation        "
+echo "         Refer to the official HBlink Repo for more documentation        "
 echo "                 https://github.com/HBLink-org/hblink3                   "
 echo ""
 echo "              Check out the docker installer of HBlink3 here             "

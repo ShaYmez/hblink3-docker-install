@@ -87,7 +87,7 @@ echo "Flushing network tracking table....."
 conntrack -F
 sleep 1
 
-echo "Starting Dasdhboard....."
+echo "Starting Dashboard....."
 systemctl restart hbmon
 figlet "HBMonv2"
 echo "Done."

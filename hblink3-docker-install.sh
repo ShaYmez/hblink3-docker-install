@@ -47,7 +47,7 @@ then
 fi
 DIRDIR=$(pwd)
 LOCAL_IP=$(ip a | grep inet | grep "eth0\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
-EXTERNAL_IP=$(curl https://ipecho.net/plain)
+EXTERNAL_IP=$(curl -s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null || echo "Unable to detect")
 ARC=$(lscpu | grep Arch | awk '{print $2}')
 VERSION=$(sed 's/\..*//' /etc/debian_version)
 ARMv7l=https://get.docker.com | sh
