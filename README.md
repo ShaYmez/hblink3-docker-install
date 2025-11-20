@@ -10,7 +10,7 @@ This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debia
 Parrot is built into this install (Default disabled, see below how to enable the parrot feature!
 
 ### Destructive Installer
-This is a destructive installer and is recomended to be built on a freshly installed machine running Debian 10 or 11. Please note this installer will not work on Debian 12 Bookworm!!
+This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 10 or 11. Please note this installer will not work on Debian 12 Bookworm!!
 
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
@@ -27,7 +27,7 @@ This installer includes all the usual libs and packages including docker, apache
 install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine that has other software on it! YOU HAVE BEEN WARNED!
 
 ### Prerequisite
-The host system must be running dabian 10 or 11. Although this software may run on the latest debian platform, this installer has only been tested on debian 10 and 11. The installer may fail due to pip/python changes in debian 12. This script has been tested on most architectures but the system requires, at a minimum; 1 core, 512mbmb of ram, the required spec to run docker and additional procceses! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+The host system must be running Debian 10 or 11. Although this software may run on the latest debian platform, this installer has only been tested on debian 10 and 11. The installer may fail due to pip/python changes in debian 12. This script has been tested on most architectures but the system requires, at a minimum; 1 core, 512mb of ram, the required spec to run docker and additional processes! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 
 Note* If you get Locale error(s) (LC_CTYPE=UTF-8, which is wrong) can happen when you login over ssh from a Mac to a linux box, and your terminal automatically sets environment variables. There's a checkbox for that. Uncheck it, and you're good to go.
 
@@ -36,7 +36,7 @@ Make sure your system is up-to-date and pull Git from the apt repo.
 apt-get install -y git
 ```
 ### Installation
-1. Preferably a clean Dabian 10 or 11 system. Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
+1. Preferably a clean Debian 10 or 11 system. Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
 ```sh
 apt update
 sudo su
@@ -51,7 +51,7 @@ git clone https://github.com/ShaYmez/hblink3-docker-install
 cd hblink3-docker-install
 ./hblink3-docker-install.sh
 ```
-4. follow the install and any prompts! It it will prompt you for kernel updates if neccassary.
+4. follow the install and any prompts! It will prompt you for kernel updates if necessary.
 5. Once the installation is complete you will be presented with the first time run menu. Edit your config or exit to complete setup.
 
 ### New Menu System released with this installer!
@@ -59,7 +59,7 @@ cd hblink3-docker-install
 ![New HBlink Menu System](img/HBLINK_menu.png "HBlink-menu")
 
 6. Once the installation is complete you will be guided to the Setup Menu. To interact with this menu follow the on-screen
-instructions! Set up and configure your system with the new menu system! Once finihsed hit 'Finish Setup & Exit' to exit out of the setup menu.
+instructions! Set up and configure your system with the new menu system! Once finished hit 'Finish Setup & Exit' to exit out of the setup menu.
 
 7. To enter the HBlink control menu, type the command
 ```sh
@@ -151,7 +151,7 @@ nano /etc/hblink3/hblink.cfg
 ```
 Scroll down to the ```[Parrot]``` stanza and edit ```ENABLED: True``` to enable.
 Next we have put an example rule in rules.py. Remove the ```#``` hashes to enable routing of the parrot.
-'''sh
+```sh
 nano /etc/hblink3/rules.py
 ```
 Ctrl X and hit save!
@@ -159,7 +159,7 @@ Once done save this and enter the the HBlink control menu
 ```sh
 hblink-menu
 ```
-Select option 4 "Update HBlinlk / Docker
+Select option 4 "Update HBlink / Docker
 Watch the terminal for any errors while bringing up the project! You can use the parrot on TG9999 (Default) or edit for your own tastes!
 
 ### Postrequisite
