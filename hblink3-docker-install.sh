@@ -1,9 +1,9 @@
 #!/bin/bash
 # Docker version alpine-3.18
-# Version 14112024 hblink3-docker-installer
+# Version 13122025 hblink3-docker-installer
 #
 ##################################################################################
-#   Copyright (C) 2021-2024 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
+#   Copyright (C) 2021-2025 Shane Daley, M0VUB aka ShaYmez. <support@gb7nr.co.uk>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
