@@ -1,6 +1,7 @@
 #!/bin/bash
 # Docker version alpine-3.18
-# Version 13122025 hblink3-docker-installer
+# Version 1.5.0 (13122025) hblink3-docker-installer
+# Release: Debian 13 (Trixie) Support Verified
 #
 ##################################################################################
 #   Copyright (C) 2021-2025 Shane Daley, M0VUB aka ShaYmez. <shane@freestar.network>

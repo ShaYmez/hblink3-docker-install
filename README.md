@@ -1,9 +1,9 @@
 # HBlink3 Docker Installer
-Debian 10 / 11 / 12 / 13 (Trixie) Support!!
+**Version 1.5.0** - Debian 10 / 11 / 12 / 13 (Trixie) Support!!
 =======
 This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10, 11, 12, and 13 (Trixie). 
 
-**Note:** Debian 12 (Bookworm) and 13 (Trixie) support has been added with proper handling of pip installation restrictions and docker-compose compatibility.
+**Note:** Debian 12 (Bookworm) and 13 (Trixie) support has been added with proper handling of pip installation restrictions and docker-compose compatibility. See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
