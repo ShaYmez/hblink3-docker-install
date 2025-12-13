@@ -108,7 +108,7 @@ install_docker_and_dependencies() {
 # Wrapper script to provide docker-compose command using docker compose plugin
 exec docker compose "$@"
 EOF
-                                if [ $? -eq 0 ] && [ -f /usr/local/bin/docker-compose ]; then
+                                if [ -f /usr/local/bin/docker-compose ]; then
                                         chmod +x /usr/local/bin/docker-compose
                                         echo "docker-compose wrapper created successfully"
                                 else
