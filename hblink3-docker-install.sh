@@ -194,9 +194,19 @@ echo "--------------------------------------------------------------------------
 echo "Installing HBMonv2 configuration....."
 echo "------------------------------------------------------------------------------"
 sleep 2
-                pip3 install setuptools wheel
-                pip3 install -r requirements.txt
-                pip3 install attrs --force
+                # Handle pip installation for different Debian versions
+                if [ $VERSION -ge 12 ]; then
+                        # For Debian 12+, use --break-system-packages flag or virtual environment
+                        echo "Detected Debian 12+, using appropriate pip installation method..."
+                        pip3 install --break-system-packages setuptools wheel 2>/dev/null || pip3 install setuptools wheel
+                        pip3 install --break-system-packages -r requirements.txt 2>/dev/null || pip3 install -r requirements.txt
+                        pip3 install --break-system-packages attrs --force 2>/dev/null || pip3 install attrs --force
+                else
+                        # For Debian 10-11, use standard pip installation
+                        pip3 install setuptools wheel
+                        pip3 install -r requirements.txt
+                        pip3 install attrs --force
+                fi
         echo Install /opt/HBMonv2/config.py ...
 cat << EOF > /opt/HBMonv2/config.py
 CONFIG_INC      = True                           # Include HBlink stats
