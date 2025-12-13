@@ -95,8 +95,11 @@ install_docker_and_dependencies() {
         # Install docker-compose based on Debian version
         if [ $version -ge 12 ]; then
                 # For Debian 12+ use docker-compose-plugin or install from GitHub
+                # Note: We prefer docker-compose-plugin from apt repos when available for security
                 apt-get install -y docker-compose-plugin 2>/dev/null || {
                         echo "Installing docker-compose from GitHub releases..."
+                        # Fallback to GitHub releases for official Docker Compose binary
+                        # Downloaded from official Docker GitHub repository over HTTPS
                         curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
                         chmod +x /usr/local/bin/docker-compose
                         ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose 2>/dev/null || true
@@ -194,19 +197,24 @@ echo "--------------------------------------------------------------------------
 echo "Installing HBMonv2 configuration....."
 echo "------------------------------------------------------------------------------"
 sleep 2
-                # Handle pip installation for different Debian versions
-                if [ $VERSION -ge 12 ]; then
-                        # For Debian 12+, use --break-system-packages flag or virtual environment
-                        echo "Detected Debian 12+, using appropriate pip installation method..."
-                        pip3 install --break-system-packages setuptools wheel 2>/dev/null || pip3 install setuptools wheel
-                        pip3 install --break-system-packages -r requirements.txt 2>/dev/null || pip3 install -r requirements.txt
-                        pip3 install --break-system-packages attrs --force 2>/dev/null || pip3 install attrs --force
-                else
-                        # For Debian 10-11, use standard pip installation
-                        pip3 install setuptools wheel
-                        pip3 install -r requirements.txt
-                        pip3 install attrs --force
-                fi
+
+# Helper function to install pip packages with Debian 12+ compatibility
+pip_install() {
+        local args="$@"
+        if [ $VERSION -ge 12 ]; then
+                # For Debian 12+, try with --break-system-packages flag first
+                pip3 install --break-system-packages $args 2>/dev/null || pip3 install $args
+        else
+                # For Debian 10-11, use standard pip installation
+                pip3 install $args
+        fi
+}
+
+                echo "Installing Python dependencies..."
+                pip_install setuptools wheel
+                pip_install -r requirements.txt
+                pip_install attrs --force
+                
         echo Install /opt/HBMonv2/config.py ...
 cat << EOF > /opt/HBMonv2/config.py
 CONFIG_INC      = True                           # Include HBlink stats

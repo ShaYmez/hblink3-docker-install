@@ -19,7 +19,7 @@
 
 # Main MENU system.....
 while : ; do
-menuopt=$(whiptail --title "HBlink3 Control Version 1.9PL" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 23 56 14 \
+menuopt=$(whiptail --title "HBlink3 Control Version 1.9PL" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 24 56 14 \
 1 " Stop HBlink " \
 2 " Start HBlink " \
 3 " Restart HBlink " \
