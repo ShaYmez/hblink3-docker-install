@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **BREAKING CHANGE - Modern Python Package Management**: For Debian 12+ (Bookworm/Trixie), HBMonv2 now uses a Python virtual environment instead of system-wide package installation
+- HBMonv2 Python dependencies installed in isolated virtual environment at `/opt/HBMonv2/venv` for Debian 12+
+- pip_install helper function now uses virtual environment for Debian 12+ (PEP 668 compliant)
+- systemd service file automatically configured to use virtual environment Python interpreter for Debian 12+
+- Added python3-venv to system dependencies for Debian 12+
 - Enhanced pip_install helper function with comprehensive error handling and user feedback
 - Added proper error checking after all pip package installations
 - Improved error messages to help users diagnose installation failures
@@ -14,9 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed deprecated --force flag to --force-reinstall for attrs package installation
 
 ### Fixed
+- **Resolved externally-managed-environment errors on Debian 12/13** by using virtual environments instead of --break-system-packages flag
+- **Resolved package conflicts with system-installed cryptography** by isolating Python packages in virtual environment
 - Silent pip installation failures now properly reported to users
 - Missing requirements.txt file now handled gracefully with warning instead of silent failure
 - pip installation errors now cause the installer to exit with proper error messages
+
+### Technical Details
+- Debian 10-11: Continues to use standard system-wide pip installation (backward compatible)
+- Debian 12+: Uses modern virtual environment approach following PEP 668 standards
+- Virtual environment is automatically activated during installation
+- pip is upgraded within the virtual environment for latest features
 
 ## [1.5.0] - 2024-12-13
 
