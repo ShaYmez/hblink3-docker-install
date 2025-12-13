@@ -130,7 +130,9 @@ This version corresponds to installer version 13122025
 ## Contributing
 For bugs, features, or support, please visit:
 - Main Repository: https://github.com/ShaYmez/hblink3-docker-install
-- HBlink3 Repository: https://github.com/HBLink-org/hblink3
+- HBlink3 Repository: https://github.com/ShaYmez/hblink3
+- HBMonv2 Repository: https://github.com/ShaYmez/HBMonv2
+- Official HBlink3 Upstream: https://github.com/HBLink-org/hblink3
 
 ## Credits
 - **Maintainer:** Shane Daley - M0VUB (M0VUB)
