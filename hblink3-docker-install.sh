@@ -235,19 +235,65 @@ pip_install() {
         local args="$@"
         if [ $VERSION -ge 12 ]; then
                 # For Debian 12+, try with --break-system-packages flag first
-                pip3 install --break-system-packages $args 2>/dev/null || pip3 install $args
+                echo "Installing Python packages for Debian $VERSION: $args"
+                if pip3 install --break-system-packages $args; then
+                        echo "Successfully installed: $args"
+                        return 0
+                else
+                        echo "Warning: Installation with --break-system-packages failed, trying standard installation..."
+                        if pip3 install $args; then
+                                echo "Successfully installed: $args"
+                                return 0
+                        else
+                                echo "ERROR: Failed to install: $args"
+                                return 1
+                        fi
+                fi
         else
                 # For Debian 10-11, use standard pip installation
-                pip3 install $args
+                echo "Installing Python packages for Debian $VERSION: $args"
+                if pip3 install $args; then
+                        echo "Successfully installed: $args"
+                        return 0
+                else
+                        echo "ERROR: Failed to install: $args"
+                        return 1
+                fi
         fi
 }
 
-                echo "Installing Python dependencies..."
-                pip_install setuptools wheel
-                pip_install -r requirements.txt
-                pip_install attrs --force
-                
-        echo Install /opt/HBMonv2/config.py ...
+echo "Installing Python dependencies..."
+cd $HBMONDIR
+
+# Install setuptools and wheel first
+if ! pip_install setuptools wheel; then
+        echo "ERROR: Failed to install setuptools and wheel"
+        echo "Please check your internet connection and Python installation"
+        exit 1
+fi
+
+# Check if requirements.txt exists before trying to install
+if [ -f requirements.txt ]; then
+        if ! pip_install -r requirements.txt; then
+                echo "ERROR: Failed to install packages from requirements.txt"
+                echo "This may be due to network issues or missing system dependencies"
+                exit 1
+        fi
+else
+        echo "WARNING: requirements.txt not found in $HBMONDIR"
+        echo "Continuing installation without requirements.txt dependencies..."
+fi
+
+# Install attrs with --force flag (note: --force is deprecated, using --force-reinstall)
+if ! pip_install attrs --force-reinstall; then
+        echo "WARNING: Failed to install attrs with --force-reinstall, trying without force..."
+        if ! pip_install attrs; then
+                echo "ERROR: Failed to install attrs package"
+                exit 1
+        fi
+fi
+
+echo Install /opt/HBMonv2/config.py ...
 cat << EOF > /opt/HBMonv2/config.py
 ###############################################################################
 #                    HBMonv2 Configuration File Example
