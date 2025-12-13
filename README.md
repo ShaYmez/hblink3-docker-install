@@ -1,7 +1,7 @@
 # HBlink3 Docker Installer
-Debian 10 / 11 only!!
+Debian 10 / 11 / 12 / 13 (Trixie) Support!!
 =======
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10 / 11. The HBMonv2 dashboard is not currently supported on debian 12 at this time!!
+This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 10, 11, 12, and 13 (Trixie).
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
@@ -10,7 +10,7 @@ This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debia
 Parrot is built into this install (Default disabled, see below how to enable the parrot feature!
 
 ### Destructive Installer
-This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 10 or 11. Please note this installer will not work on Debian 12 Bookworm!!
+This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 10, 11, 12, or 13 (Trixie).
 
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
@@ -27,7 +27,7 @@ This installer includes all the usual libs and packages including docker, apache
 install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine that has other software on it! YOU HAVE BEEN WARNED!
 
 ### Prerequisite
-The host system must be running Debian 10 or 11. Although this software may run on the latest debian platform, this installer has only been tested on debian 10 and 11. The installer may fail due to pip/python changes in debian 12. This script has been tested on most architectures but the system requires, at a minimum; 1 core, 512mb of ram, the required spec to run docker and additional processes! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+The host system must be running Debian 10, 11, 12, or 13 (Trixie). The installer has been tested on these Debian versions and works on most architectures. The system requires, at a minimum; 1 core, 512mb of ram, the required spec to run docker and additional processes! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 
 Note* If you get Locale error(s) (LC_CTYPE=UTF-8, which is wrong) can happen when you login over ssh from a Mac to a linux box, and your terminal automatically sets environment variables. There's a checkbox for that. Uncheck it, and you're good to go.
 
@@ -36,7 +36,7 @@ Make sure your system is up-to-date and pull Git from the apt repo.
 apt-get install -y git
 ```
 ### Installation
-1. Preferably a clean Debian 10 or 11 system. Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
+1. Preferably a clean Debian 10, 11, 12, or 13 (Trixie) system. Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
 ```sh
 apt update
 sudo su
@@ -72,7 +72,31 @@ hblink-stop
 hblink-restart
 hblink-flush
 hblink-update
+hblink-uninstall
 ```
+
+### Uninstallation
+To completely remove HBlink3 and all its components from your system, you can use the uninstall script:
+```sh
+hblink-uninstall
+```
+or
+```sh
+hblink-menu
+```
+Then select option 11 "Uninstall HBlink3"
+
+The uninstall script will:
+- Stop all HBlink3 services (Docker containers and HBMonv2)
+- Remove Docker containers and HBlink images
+- Remove systemd service files
+- Remove cron jobs
+- Remove control scripts from /usr/local/sbin
+- Backup configurations to /root/hblink3-backup-[timestamp]
+- Remove installation directories (/etc/hblink3, /opt/HBMonv2, /var/log/hblink)
+- Restore default Apache index page
+
+**Note:** Docker, Apache2, PHP, and other system packages will NOT be removed during uninstallation.
 
 9. To interact with HBlink3 manually using docker you need to enter the HBlink3 directory
 ```sh

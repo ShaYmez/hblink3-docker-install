@@ -1,0 +1,247 @@
+#!/bin/bash
+
+# HBLINK3 DOCKER UNINSTALL SCRIPT V1.0
+# This script written by Shane Daley M0VUB. 
+# This script gracefully removes HBlink3 installation and all related components.
+
+#   Copyright (C) 2024 Shane P, Daley  M0VUB <support@gb7nr.co.uk>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+
+# Root check
+if [ "$EUID" -ne 0 ];
+then
+  echo ""
+  echo "You Must be root to run this script!!"
+  exit 1
+fi
+
+clear
+
+echo "*************************************************************************"
+echo ""
+echo "              HBlink3 Docker Installation Uninstaller                    "
+echo ""
+echo "*************************************************************************"
+echo ""
+echo "WARNING: This will remove ALL HBlink3 components including:"
+echo "  - HBlink3 Docker containers and images"
+echo "  - HBMonv2 Dashboard"
+echo "  - Configuration files (/etc/hblink3)"
+echo "  - Log files (/var/log/hblink)"
+echo "  - Control scripts (/usr/local/sbin/hblink-*)"
+echo "  - Systemd services"
+echo "  - Cron jobs"
+echo ""
+echo "NOTE: Docker, Apache2, PHP, and system packages will NOT be removed."
+echo ""
+read -p "Are you sure you want to continue? (yes/no): " confirm
+
+if [ "$confirm" != "yes" ]; then
+    echo "Uninstall cancelled."
+    exit 0
+fi
+
+echo ""
+echo "Starting uninstallation process..."
+echo ""
+
+# Stop services
+echo "------------------------------------------------------------------------------"
+echo "Stopping HBlink3 services..."
+echo "------------------------------------------------------------------------------"
+
+if [ -d "/etc/hblink3" ]; then
+    cd /etc/hblink3
+    if [ -f "docker-compose.yml" ]; then
+        echo "Stopping HBlink3 Docker container..."
+        docker-compose down 2>/dev/null || true
+    fi
+fi
+
+if systemctl is-active --quiet hbmon; then
+    echo "Stopping HBMonv2 service..."
+    systemctl stop hbmon
+fi
+
+if systemctl is-enabled --quiet hbmon 2>/dev/null; then
+    echo "Disabling HBMonv2 service..."
+    systemctl disable hbmon
+fi
+
+# Remove Docker containers and images
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Removing HBlink3 Docker containers and images..."
+echo "------------------------------------------------------------------------------"
+
+if [ -x "$(command -v docker)" ]; then
+    # Remove hblink container if it exists
+    if docker ps -a | grep -q hblink; then
+        echo "Removing hblink container..."
+        docker rm -f hblink 2>/dev/null || true
+    fi
+    
+    # Remove hblink images
+    hblink_images=$(docker images | grep -i hblink | awk '{print $3}')
+    if [ ! -z "$hblink_images" ]; then
+        echo "Removing HBlink Docker images..."
+        docker rmi -f $hblink_images 2>/dev/null || true
+    fi
+fi
+
+# Remove systemd service files
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Removing systemd service files..."
+echo "------------------------------------------------------------------------------"
+
+if [ -f "/lib/systemd/system/hbmon.service" ]; then
+    echo "Removing hbmon.service..."
+    rm -f /lib/systemd/system/hbmon.service
+    systemctl daemon-reload
+fi
+
+# Remove cron jobs
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Removing cron jobs..."
+echo "------------------------------------------------------------------------------"
+
+if [ -f "/etc/cron.daily/lastheard" ]; then
+    echo "Removing lastheard cron job..."
+    rm -f /etc/cron.daily/lastheard
+fi
+
+# Remove control scripts
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Removing control scripts..."
+echo "------------------------------------------------------------------------------"
+
+echo "Removing HBlink control scripts from /usr/local/sbin..."
+rm -f /usr/local/sbin/hblink-menu
+rm -f /usr/local/sbin/hblink-flush
+rm -f /usr/local/sbin/hblink-update
+rm -f /usr/local/sbin/hblink-upgrade
+rm -f /usr/local/sbin/hblink-stop
+rm -f /usr/local/sbin/hblink-start
+rm -f /usr/local/sbin/hblink-restart
+rm -f /usr/local/sbin/hblink-initial-setup
+rm -f /usr/local/sbin/hblink-uninstall
+
+# Backup configurations before removal
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Creating backup of configuration files..."
+echo "------------------------------------------------------------------------------"
+
+backup_dir="/root/hblink3-backup-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$backup_dir"
+
+if [ -d "/etc/hblink3" ]; then
+    echo "Backing up /etc/hblink3 to $backup_dir..."
+    cp -r /etc/hblink3 "$backup_dir/" 2>/dev/null || true
+fi
+
+if [ -d "/opt/HBMonv2" ]; then
+    echo "Backing up /opt/HBMonv2/config.py to $backup_dir..."
+    mkdir -p "$backup_dir/HBMonv2"
+    cp /opt/HBMonv2/config.py "$backup_dir/HBMonv2/" 2>/dev/null || true
+fi
+
+# Remove directories
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Removing installation directories..."
+echo "------------------------------------------------------------------------------"
+
+if [ -d "/etc/hblink3" ]; then
+    echo "Removing /etc/hblink3..."
+    rm -rf /etc/hblink3
+fi
+
+if [ -d "/opt/HBMonv2" ]; then
+    echo "Removing /opt/HBMonv2..."
+    rm -rf /opt/HBMonv2
+fi
+
+if [ -d "/var/log/hblink" ]; then
+    echo "Removing /var/log/hblink..."
+    rm -rf /var/log/hblink
+fi
+
+if [ -d "/opt/tmp" ]; then
+    echo "Removing /opt/tmp..."
+    rm -rf /opt/tmp
+fi
+
+# Restore default Apache index
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Restoring default Apache index page..."
+echo "------------------------------------------------------------------------------"
+
+if [ -f "/var/www/html/index_APACHE.html" ]; then
+    echo "Restoring original index.html..."
+    cd /var/www/html
+    rm -f index.html
+    mv index_APACHE.html index.html 2>/dev/null || true
+fi
+
+# Remove HBMonv2 dashboard files
+if [ -f "/var/www/html/info.php" ]; then
+    echo "Removing HBMonv2 dashboard files from /var/www/html..."
+    # Remove only HBMonv2 specific files, not entire www directory
+    cd /var/www/html
+    rm -f info.php lastheard.php talkgroups.php *.js 2>/dev/null || true
+    rm -rf css/ fonts/ img/ include/ scripts/ 2>/dev/null || true
+fi
+
+# Final cleanup
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Final cleanup..."
+echo "------------------------------------------------------------------------------"
+
+# Restart Apache to apply changes
+if systemctl is-active --quiet apache2; then
+    echo "Restarting Apache2..."
+    systemctl restart apache2
+fi
+
+echo ""
+echo "*************************************************************************"
+echo ""
+echo "              HBlink3 Uninstallation Complete!                           "
+echo ""
+echo "  All HBlink3 components have been removed from your system.             "
+echo ""
+echo "  Configuration backups saved to: $backup_dir"
+echo ""
+echo "  The following were NOT removed (if you want to remove them manually):  "
+echo "    - Docker (docker-ce, docker-ce-cli, containerd.io)                   "
+echo "    - Docker Compose                                                      "
+echo "    - Apache2                                                             "
+echo "    - PHP and PHP modules                                                 "
+echo "    - Python3 and pip3                                                    "
+echo "    - System packages (git, curl, wget, etc.)                             "
+echo ""
+echo "  To remove Docker completely, run:                                       "
+echo "    apt-get remove docker-ce docker-ce-cli containerd.io docker-compose  "
+echo "    rm -rf /var/lib/docker                                                "
+echo ""
+echo "*************************************************************************"
+echo ""
+echo "Thank you for using HBlink3 Docker Installer!"
+echo ""
+
+exit 0

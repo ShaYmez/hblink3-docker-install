@@ -19,7 +19,7 @@
 
 # Main MENU system.....
 while : ; do
-menuopt=$(whiptail --title "HBlink3 Control Version 1.9PL" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 23 56 13 \
+menuopt=$(whiptail --title "HBlink3 Control Version 1.9PL" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 23 56 14 \
 1 " Stop HBlink " \
 2 " Start HBlink " \
 3 " Restart HBlink " \
@@ -30,8 +30,9 @@ menuopt=$(whiptail --title "HBlink3 Control Version 1.9PL" --menu "Select option
 8 " Edit Dashboard Config " \
 9 " Full Upgrade OBPMaster " \
 10 " System Update / apt update " \
-11 " Reboot Entire Server " \
-12 " Shutdown Entire Server " 3>&1 1>&2 2>&3)
+11 " Uninstall HBlink3 " \
+12 " Reboot Entire Server " \
+13 " Shutdown Entire Server " 3>&1 1>&2 2>&3)
 exitstatus=$?
 # Back-end HBlink3 menu
 if [ $exitstatus = 0 ]; then
@@ -62,8 +63,10 @@ sudo /usr/local/sbin/hblink-upgrade ;;
 10)
 sudo apt-get update -y && sudo apt-get upgrade ;;
 11)
-sudo reboot ;;
+sudo /usr/local/sbin/hblink-uninstall ;;
 12)
+sudo reboot ;;
+13)
 sudo shutdown now ;
 esac
 done
