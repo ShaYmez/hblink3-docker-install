@@ -271,11 +271,6 @@ cd $HBMONDIR
 # For Debian 12+, create and use a virtual environment (modern PEP 668 compliant approach)
 if [ $VERSION -ge 12 ]; then
         echo "Creating Python virtual environment for Debian $VERSION..."
-        # Install python3-venv if not already installed
-        if ! dpkg -l | grep -q python3-venv; then
-                echo "Installing python3-venv package..."
-                apt-get install -y python3-venv
-        fi
         
         # Create virtual environment
         if [ ! -d "$HBMONDIR/venv" ]; then
@@ -298,7 +293,9 @@ if [ $VERSION -ge 12 ]; then
         echo "Virtual environment activated"
         
         # Upgrade pip in the virtual environment
-        pip3 install --upgrade pip
+        if ! pip3 install --upgrade pip; then
+                echo "WARNING: Failed to upgrade pip in virtual environment, continuing with existing version..."
+        fi
 fi
 
 # Install setuptools and wheel first
@@ -383,12 +380,14 @@ EOF
                 # For Debian 12+, update the service file to use virtual environment
                 if [ $VERSION -ge 12 ]; then
                         echo "Updating hbmon.service to use virtual environment..."
-                        # Update ExecStart to use venv Python
-                        sed -i "s|ExecStart=/usr/bin/python3|ExecStart=$HBMONDIR/venv/bin/python3|g" /lib/systemd/system/hbmon.service
-                        sed -i "s|ExecStart=python3|ExecStart=$HBMONDIR/venv/bin/python3|g" /lib/systemd/system/hbmon.service
-                        # Also handle cases where the path might be relative
-                        sed -i "s|ExecStart=\([^/]\)|ExecStart=$HBMONDIR/venv/bin/python3 \1|g" /lib/systemd/system/hbmon.service
-                        echo "Service file updated to use virtual environment"
+                        # Update ExecStart to use venv Python (only if not already using venv)
+                        if ! grep -q "$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
+                                sed -i "s|ExecStart=/usr/bin/python3|ExecStart=$HBMONDIR/venv/bin/python3|g" /lib/systemd/system/hbmon.service
+                                sed -i "s|ExecStart=python3 |ExecStart=$HBMONDIR/venv/bin/python3 |g" /lib/systemd/system/hbmon.service
+                                echo "Service file updated to use virtual environment"
+                        else
+                                echo "Service file already configured to use virtual environment"
+                        fi
                 fi
                 
                 cp utils/lastheard /etc/cron.daily/
