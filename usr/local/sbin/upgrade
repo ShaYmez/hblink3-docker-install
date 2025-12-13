@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # HBLINK3 DOCKER CONTROL SCRIPTS V2.0
-# Version 13122025
+# Version 1.5.0 (13122025)
 # This script written by Shane Daley M0VUB. The script gracefully shuts down services while services are cleaned and logs are truncated.
 # We can also add items in this script for future use like updates or further log trims.
 # Add to the cron tab for auto execution
