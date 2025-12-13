@@ -101,8 +101,11 @@ install_docker_and_dependencies() {
                         echo "docker-compose-plugin installed successfully"
                         # Create wrapper script for docker-compose command compatibility
                         # docker-compose-plugin provides 'docker compose' but scripts use 'docker-compose'
+                        # Note: Using single quotes in heredoc ('EOF') prevents variable expansion for robustness
                         if [ ! -f /usr/local/bin/docker-compose ]; then
                                 echo "Creating docker-compose wrapper script..."
+                                # Create wrapper that forwards all commands to 'docker compose'
+                                # Exit on failure is intentional - without this wrapper, all control scripts will fail
                                 if cat > /usr/local/bin/docker-compose << 'EOF'
 #!/bin/sh
 # Wrapper script to provide docker-compose command using docker compose plugin
@@ -116,6 +119,8 @@ EOF
                                         exit 1
                                 fi
                         else
+                                # Skip wrapper creation if docker-compose already exists
+                                # This preserves existing installations (from apt or manual install)
                                 echo "docker-compose command already exists, skipping wrapper creation"
                         fi
                 else
