@@ -97,14 +97,27 @@ install_docker_and_dependencies() {
         if [ $version -ge 12 ]; then
                 # For Debian 12+ use docker-compose-plugin or install from GitHub
                 # Note: We prefer docker-compose-plugin from apt repos when available for security
-                apt-get install -y docker-compose-plugin 2>/dev/null || {
+                if apt-get install -y docker-compose-plugin 2>/dev/null; then
+                        echo "docker-compose-plugin installed successfully"
+                        # Create wrapper script for docker-compose command compatibility
+                        # docker-compose-plugin provides 'docker compose' but scripts use 'docker-compose'
+                        if [ ! -f /usr/local/bin/docker-compose ]; then
+                                echo "Creating docker-compose wrapper script..."
+                                cat > /usr/local/bin/docker-compose << 'EOF'
+#!/bin/sh
+# Wrapper script to provide docker-compose command using docker compose plugin
+exec docker compose "$@"
+EOF
+                                chmod +x /usr/local/bin/docker-compose
+                        fi
+                else
                         echo "Installing docker-compose from GitHub releases..."
                         # Fallback to GitHub releases for official Docker Compose binary
                         # Downloaded from official Docker GitHub repository over HTTPS
                         curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
                         chmod +x /usr/local/bin/docker-compose
                         ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose 2>/dev/null || true
-                }
+                fi
         else
                 # For Debian 10-11 use apt package
                 apt-get install -y docker-compose
