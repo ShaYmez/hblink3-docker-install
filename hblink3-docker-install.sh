@@ -103,18 +103,20 @@ install_docker_and_dependencies() {
                         # docker-compose-plugin provides 'docker compose' but scripts use 'docker-compose'
                         if [ ! -f /usr/local/bin/docker-compose ]; then
                                 echo "Creating docker-compose wrapper script..."
-                                cat > /usr/local/bin/docker-compose << 'EOF'
+                                if cat > /usr/local/bin/docker-compose << 'EOF'
 #!/bin/sh
 # Wrapper script to provide docker-compose command using docker compose plugin
 exec docker compose "$@"
 EOF
-                                if [ -f /usr/local/bin/docker-compose ]; then
+                                then
                                         chmod +x /usr/local/bin/docker-compose
                                         echo "docker-compose wrapper created successfully"
                                 else
                                         echo "ERROR: Failed to create docker-compose wrapper script"
                                         exit 1
                                 fi
+                        else
+                                echo "docker-compose command already exists, skipping wrapper creation"
                         fi
                 else
                         echo "Installing docker-compose from GitHub releases..."
