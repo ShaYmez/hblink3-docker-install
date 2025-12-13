@@ -20,11 +20,11 @@
 #   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ##################################################################################
 #
-# A tool to install HBlink3 Docker with Debian 10-11 / Ubuntu 20.04 support.
+# A tool to install HBlink3 Docker with Debian 10-13 / Ubuntu 20.04 support.
 # This essentially is a HBlink3 server fully installed with dashboard ready to go.
-# Step 1: Install Debian 10 or 11 or Ubuntu 20.04 and make sure it has internet and is up to date.
+# Step 1: Install Debian 10, 11, 12, or 13 (Trixie) or Ubuntu 20.04 and make sure it has internet and is up to date.
 # Step 2: Run this script on the computer.
-# Step 4: Reboot after installation.
+# Step 3: Reboot after installation.
 # This is a docker version and you can use the following comands to control / maintain your server
 # cd /etc/hblink3
 # docker-compose up -d (starts the hblink3 docker container)
@@ -42,7 +42,7 @@ fi
 if [ ! -e "/etc/debian_version" ]
 then
   echo ""
-  echo "This script is only tested in Debian 9,10 & 11 repo only."
+  echo "This script is only tested in Debian 10, 11, 12 & 13 (Trixie)."
   exit 0
 fi
 DIRDIR=$(pwd)
@@ -68,51 +68,67 @@ echo "--------------------------------------------------------------------------
 echo "Downloading and installing required software & dependencies....."
 echo "------------------------------------------------------------------------------"
 
-        if [ $VERSION = 10 ];
-        then
-                apt-get update
-                apt-get install -y $DEP
-                sleep 2
-                apt-get remove docker docker-engine docker.io containerd runc
-                curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-                
-                echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
-                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-                
-                apt-get update
-                apt-get install -y docker-ce docker-ce-cli containerd.io
+install_docker_and_dependencies() {
+        local version=$1
+        echo "Detected Debian version: $version"
+        
+        # Install base dependencies
+        apt-get update
+        apt-get install -y $DEP
+        sleep 2
+        
+        # Remove old Docker versions if present
+        apt-get remove docker docker-engine docker.io containerd runc 2>/dev/null || true
+        
+        # Add Docker GPG key
+        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        
+        # Add Docker repository
+        echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+        $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        
+        # Install Docker
+        apt-get update
+        apt-get install -y docker-ce docker-ce-cli containerd.io
+        
+        # Install docker-compose based on Debian version
+        if [ $version -ge 12 ]; then
+                # For Debian 12+ use docker-compose-plugin or install from GitHub
+                # Note: We prefer docker-compose-plugin from apt repos when available for security
+                apt-get install -y docker-compose-plugin 2>/dev/null || {
+                        echo "Installing docker-compose from GitHub releases..."
+                        # Fallback to GitHub releases for official Docker Compose binary
+                        # Downloaded from official Docker GitHub repository over HTTPS
+                        curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
+                        chmod +x /usr/local/bin/docker-compose
+                        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose 2>/dev/null || true
+                }
+        else
+                # For Debian 10-11 use apt package
                 apt-get install -y docker-compose
-                systemctl enable docker
-                systemctl start docker
-                figlet "docker.io"
-                echo Set userland-proxy to false...
-                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
-                
-        elif [ $VERSION = 11 ];
-        then
-                apt-get update
-                apt-get install -y $DEP
-                sleep 2
-                apt-get remove docker docker-engine docker.io containerd runc
-                curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-                
-                echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
-                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-                
-                apt-get update
-                apt-get install -y docker-ce docker-ce-cli containerd.io
-                apt-get install -y docker-compose
-                systemctl enable docker
-                systemctl start docker
-                figlet "docker.io"
-                echo Set userland-proxy to false...
-                echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+        fi
+        
+        # Enable and start Docker
+        systemctl enable docker
+        systemctl start docker
+        figlet "docker.io"
+        
+        echo "Set userland-proxy to false..."
+        echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+}
+
+        if [ $VERSION = 10 ] || [ $VERSION = 11 ]; then
+                install_docker_and_dependencies $VERSION
+                                
+        elif [ $VERSION = 12 ] || [ $VERSION = 13 ]; then
+                # Debian 12 (Bookworm) and 13 (Trixie) support
+                echo "Installing for Debian $VERSION..."
+                install_docker_and_dependencies $VERSION
                                 
         else
         echo "-------------------------------------------------------------------------------------------"
-        echo "Operating system not supported! Please check your running debian 10 or 11. Exiting....."
+        echo "Operating system not supported! Please check you are running Debian 10-13. Exiting....."
         echo "-------------------------------------------------------------------------------------------"
         exit 0
 fi
@@ -129,6 +145,7 @@ echo "--------------------------------------------------------------------------
         cp -p start /usr/local/sbin/hblink-start
         cp -p restart /usr/local/sbin/hblink-restart
         cp -p initial-setup /usr/local/sbin/hblink-initial-setup
+        cp -p uninstall /usr/local/sbin/hblink-uninstall
 if [ -e /usr/local/sbin/hblink-menu ]
 then
         echo "----------------------------------------------------------------------------------------------"
@@ -149,6 +166,7 @@ fi
         chmod 755 /usr/local/sbin/hblink-start
         chmod 755 /usr/local/sbin/hblink-restart
         chmod 755 /usr/local/sbin/hblink-initial-setup
+        chmod 755 /usr/local/sbin/hblink-uninstall
 echo "Done."
         
 echo "------------------------------------------------------------------------------"
@@ -179,9 +197,24 @@ echo "--------------------------------------------------------------------------
 echo "Installing HBMonv2 configuration....."
 echo "------------------------------------------------------------------------------"
 sleep 2
-                pip3 install setuptools wheel
-                pip3 install -r requirements.txt
-                pip3 install attrs --force
+
+# Helper function to install pip packages with Debian 12+ compatibility
+pip_install() {
+        local args="$@"
+        if [ $VERSION -ge 12 ]; then
+                # For Debian 12+, try with --break-system-packages flag first
+                pip3 install --break-system-packages $args 2>/dev/null || pip3 install $args
+        else
+                # For Debian 10-11, use standard pip installation
+                pip3 install $args
+        fi
+}
+
+                echo "Installing Python dependencies..."
+                pip_install setuptools wheel
+                pip_install -r requirements.txt
+                pip_install attrs --force
+                
         echo Install /opt/HBMonv2/config.py ...
 cat << EOF > /opt/HBMonv2/config.py
 CONFIG_INC      = True                           # Include HBlink stats
