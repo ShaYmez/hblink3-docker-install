@@ -136,7 +136,7 @@ echo "Done."
 echo "------------------------------------------------------------------------------"
 echo "Installing control scripts /usr/local/sbin....."
 echo "------------------------------------------------------------------------------"
-        cd /opt/hblink3-docker-install/usr/local/sbin
+        cd "$DIRDIR/usr/local/sbin"
         cp -p menu /usr/local/sbin/hblink-menu
         cp -p flush /usr/local/sbin/hblink-flush
         cp -p update /usr/local/sbin/hblink-update
@@ -167,6 +167,10 @@ fi
         chmod 755 /usr/local/sbin/hblink-restart
         chmod 755 /usr/local/sbin/hblink-initial-setup
         chmod 755 /usr/local/sbin/hblink-uninstall
+# Save installer directory path for re-installation
+        mkdir -p /etc/hblink3
+        echo "$DIRDIR" > /etc/hblink3/.installer_path
+        chmod 644 /etc/hblink3/.installer_path
 echo "Done."
         
 echo "------------------------------------------------------------------------------"
