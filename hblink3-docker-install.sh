@@ -248,37 +248,52 @@ pip_install() {
                 
         echo Install /opt/HBMonv2/config.py ...
 cat << EOF > /opt/HBMonv2/config.py
-CONFIG_INC      = True                           # Include HBlink stats
-HOMEBREW_INC    = True                           # Display Homebrew Peers status
-LASTHEARD_INC   = True                           # Display lastheard table on main page
-BRIDGES_INC     = False                          # Display Bridge status and button
-EMPTY_MASTERS   = False                          # Display Enable (True) or DISABLE (False) empty masters in status
-#
-HBLINK_IP       = '127.0.0.1'                    # HBlink's IP Address
-HBLINK_PORT     = 4321                           # HBlink's TCP reporting socket
-FREQUENCY       = 10                             # Frequency to push updates to web clients
-CLIENT_TIMEOUT  = 0                              # Clients are timed out after this many seconds, 0 to disable
+###############################################################################
+#                    HBMonv2 Configuration File Example
+#         Copyright (C) 2013-2018 Cortney T. Buffington, N0MJS n0mjs@me.com
+#         Copyright (C) 2025 Shane aka, ShaYmez <shane@freestar.network>
+###############################################################################
 
-# Generally you don't need to use this but
-# if you don't want to show in lastherad received traffic from OBP link put NETWORK ID 
-# for example: "260210,260211,260212"
-OPB_FILTER = ""
+# ---- FEATURE TOGGLES --------------------------------------------------------
+CONFIG_INC      = True    # Include HBlink stats
+HOMEBREW_INC    = True    # Display Homebrew Peers status
+LASTHEARD_INC   = True    # Display lastheard table on main page
+BRIDGES_INC     = False   # Display Bridge status and button
+EMPTY_MASTERS   = False   # Enable (True) or Disable (False) empty masters in status
 
-# Files and stuff for loading alias files for mapping numbers to names
-PATH            = './'                           # MUST END IN '/'
-PEER_FILE       = 'peer_ids.json'                # Will auto-download 
-SUBSCRIBER_FILE = 'subscriber_ids.json'          # Will auto-download 
+# ---- CONNECTION SETTINGS ----------------------------------------------------
+HBLINK_IP       = '127.0.0.1'    # HBlink's IP Address
+HBLINK_PORT     = 4321           # HBlink's TCP reporting socket
+FREQUENCY       = 10             # Frequency (secs) to push updates to web clients
+CLIENT_TIMEOUT  = 0              # Timeout clients after N secs (0=disable)
+
+# ---- NETWORK FILTERING ------------------------------------------------------
+# To hide in lastheard: provide comma-separated NETWORK IDs
+# Example: "260210,260211,260212"
+OPB_FILTER      = ""
+
+# ---- ALIAS FILES AND PATHS --------------------------------------------------
+PATH            = './'                           # Base path (MUST END IN '/')
+PEER_FILE       = 'peer_ids.json'                # Auto-download
+SUBSCRIBER_FILE = 'subscriber_ids.json'          # Auto-download
 TGID_FILE       = 'talkgroup_ids.json'           # User provided
-LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # User provided (optional, leave '' if you don't use it)
-LOCAL_PEER_FILE = 'local_peer_ids.json'          # User provided (optional, leave '' if you don't use it)
-LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # User provided (optional, leave '' if you don't use it)
-FILE_RELOAD     = 14                             # Number of days before we reload DMR-MARC database files
+LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # Optional, user provided ('' if not used)
+LOCAL_PEER_FILE = 'local_peer_ids.json'          # Optional, user provided ('' if not used)
+LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # Optional, user provided ('' if not used)
+FILE_RELOAD     = 14                             # Days before reloading MARC files
+
+# ---- ALIAS DOWNLOAD URLS ----------------------------------------------------
 PEER_URL        = 'https://radioid.net/static/rptrs.json'
 SUBSCRIBER_URL  = 'https://radioid.net/static/users.json'
 
-# Settings for log files
-LOG_PATH        = './log/'             # MUST END IN '/'
+# ---- LOGGING SETTINGS -------------------------------------------------------
+LOG_PATH        = './log/'               # MUST END IN '/'
 LOG_NAME        = 'hbmon.log'
+
+###############################################################################
+#                        END OF CONFIGURATION FILE
+###############################################################################
+
 EOF
                 cp utils/hbmon.service /lib/systemd/system/
                 cp utils/lastheard /etc/cron.daily/
