@@ -1,6 +1,7 @@
 #!/bin/bash
 # Docker version alpine-3.18
 # Version 1.5.0 (13122025) hblink3-docker-installer
+# Docker upstream repo version 2.0.2
 # Release: Debian 13 (Trixie) Support Verified
 #
 ##################################################################################
