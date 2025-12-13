@@ -274,20 +274,17 @@ if [ $VERSION -ge 12 ]; then
         
         # Create virtual environment
         if [ ! -d "$HBMONDIR/venv" ]; then
-                python3 -m venv "$HBMONDIR/venv"
-                if [ $? -ne 0 ]; then
-                        echo "ERROR: Failed to create virtual environment"
-                        exit 1
-                fi
+                python3 -m venv "$HBMONDIR/venv" || { echo "ERROR: Failed to create virtual environment"; exit 1; }
                 echo "Virtual environment created successfully at $HBMONDIR/venv"
         else
                 echo "Virtual environment already exists at $HBMONDIR/venv"
         fi
         
         # Activate virtual environment
-        source "$HBMONDIR/venv/bin/activate"
-        if [ $? -ne 0 ]; then
-                echo "ERROR: Failed to activate virtual environment"
+        source "$HBMONDIR/venv/bin/activate" || { echo "ERROR: Failed to activate virtual environment"; exit 1; }
+        # Verify activation by checking VIRTUAL_ENV is set
+        if [ -z "$VIRTUAL_ENV" ]; then
+                echo "ERROR: Virtual environment activation failed - VIRTUAL_ENV not set"
                 exit 1
         fi
         echo "Virtual environment activated"
@@ -382,9 +379,17 @@ EOF
                         echo "Updating hbmon.service to use virtual environment..."
                         # Update ExecStart to use venv Python (only if not already using venv)
                         if ! grep -q "$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
+                                # Replace common Python interpreter paths with venv path
                                 sed -i "s|ExecStart=/usr/bin/python3|ExecStart=$HBMONDIR/venv/bin/python3|g" /lib/systemd/system/hbmon.service
                                 sed -i "s|ExecStart=python3 |ExecStart=$HBMONDIR/venv/bin/python3 |g" /lib/systemd/system/hbmon.service
-                                echo "Service file updated to use virtual environment"
+                                
+                                # Verify the service file was updated correctly
+                                if grep -q "ExecStart=$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
+                                        echo "Service file updated to use virtual environment"
+                                else
+                                        echo "WARNING: Service file update may not have completed correctly"
+                                        echo "Please manually verify /lib/systemd/system/hbmon.service uses $HBMONDIR/venv/bin/python3"
+                                fi
                         else
                                 echo "Service file already configured to use virtual environment"
                         fi
