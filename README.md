@@ -1,10 +1,9 @@
 # HBlink3 Docker Installer
-**Version 1.5.0** - Debian 11 / 12 / 13 and Ubuntu 22.04 / 24.04 LTS Support!!
+Debian 11 / 12 / 13 and Ubuntu 22.04 / 24.04 LTS Support!!
 =======
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 11, 12, 13 and Ubuntu 22.04, 24.04 LTS. 
+This is a multi-arch docker installer for HBlink3 and HBMonv2 combined for Debian 11, 12, 13 and Ubuntu 22.04, 24.04 LTS. 
 
-**Important:** 
-### Destructive Installer
+**Important:** Destructive Installer!
 This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS.
 
 **Note:** Debian 12 (Bookworm) and 13 (Trixie) along with Ubuntu 22.04 and 24.04 LTS are fully supported with proper PEP 668 compliant Python package management using virtual environments. HBMonv2 now runs in an isolated Python virtual environment. See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
@@ -19,12 +18,11 @@ Parrot is built into this install (Default disabled, see below how to enable the
 Docker container pre-built for multi-arch!
 
 * x86_64
-* armv6 / armv7
-* aarch64
+* arm64
 * ppc64
 * lots more!
 
-This installer builds the entire HBlink server! It includes all of the dependencies needed to run HBlink3 within docker via docker-compose. The install also includes HBMonv2, which is a dashboard designed for HBlink3 by SP2ONG! This runs side by side, but at this time runs on the host machine using Systemd. HBMonv2 is controlled by a system unit file which runs the python code on the host.
+This installer builds the entire HBlink server! It includes all of the dependencies needed to run HBlink3 within docker via docker-compose. The install also includes HBMonv2, which is a dashboard designed for HBlink3 by SP2ONG, re-factored by M0VUB. This runs side by side, but at this time runs on the host machine using Systemd. HBMonv2 is controlled by a system unit file which runs the python code on the host.
 
 This installer includes all the usual libs and packages including docker, apache2, php and python3. It is recommended that you 
 install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine that has other software on it! YOU HAVE BEEN WARNED!
