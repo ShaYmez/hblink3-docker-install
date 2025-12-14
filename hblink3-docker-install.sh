@@ -22,18 +22,19 @@
 #   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ##################################################################################
 #
-# A tool to install HBlink3 Docker with Debian 10-13 / Ubuntu 20.04 support.
+# A tool to install HBlink3 Docker with Debian 11, 12, and 13 support.
 # This essentially is a HBlink3 server fully installed with dashboard ready to go.
-# Step 1: Install Debian 10, 11, 12, or 13 (Trixie) or Ubuntu 20.04 and make sure it has internet and is up to date.
+# Step 1: Install Debian 11, 12, or 13 (Trixie) and make sure it has internet and is up to date.
 # Step 2: Run this script on the computer.
 # Step 3: Reboot after installation.
-# This is a docker version and you can use the following comands to control / maintain your server
+# This is a docker version and you can use the following commands to control / maintain your server
 # cd /etc/hblink3
-# docker-compose up -d (starts the hblink3 docker container)
-# docker-compose down (shuts down the hblink container and stops the service)
-# docker-compose pull (updates the container to the latest docker image)
+# docker compose up -d (starts the hblink3 docker container) - Note: uses Docker Compose v2
+# docker compose down (shuts down the hblink container and stops the service)
+# docker compose pull (updates the container to the latest docker image)
+# For backward compatibility, docker-compose (with hyphen) is also supported via a wrapper script
 # systemctl |stop|start|restart|status hbmon (controls the HBMonv2 dash service)
-# logs can be found in var/log/hblink or docker comand "docker container logs hblink"
+# logs can be found in var/log/hblink or docker command "docker container logs hblink"
 #Lets begin-------------------------------------------------------------------------------------------------
 if [ "$EUID" -ne 0 ];
 then
@@ -44,7 +45,7 @@ fi
 if [ ! -e "/etc/debian_version" ]
 then
   echo ""
-  echo "This script is only tested in Debian 10, 11, 12 & 13 (Trixie)."
+  echo "This script is only tested in Debian 11, 12 & 13 (Trixie)."
   exit 0
 fi
 DIRDIR=$(pwd)
@@ -85,86 +86,112 @@ install_docker_and_dependencies() {
         sleep 2
         
         # Remove old Docker versions if present
-        apt-get remove docker docker-engine docker.io containerd runc 2>/dev/null || true
+        echo "Removing old Docker versions if present..."
+        apt-get remove docker docker-engine docker.io containerd runc docker-compose 2>/dev/null || true
         
         # Add Docker GPG key
+        echo "Adding Docker GPG key..."
         curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         
+        if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
+                echo "ERROR: Failed to download Docker GPG key"
+                exit 1
+        fi
+        
         # Add Docker repository
+        echo "Adding Docker repository..."
         echo \
         "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
         $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
         
-        # Install Docker
+        # Install Docker Engine from official Docker repositories
+        echo "Installing Docker Engine from official Docker repositories..."
         apt-get update
-        apt-get install -y docker-ce docker-ce-cli containerd.io
+        if ! apt-get install -y docker-ce docker-ce-cli containerd.io; then
+                echo "ERROR: Failed to install Docker Engine"
+                echo "Please check your internet connection and Debian version compatibility"
+                exit 1
+        fi
         
-        # Install docker-compose based on Debian version
-        if [ $version -ge 12 ]; then
-                # For Debian 12+ use docker-compose-plugin or install from GitHub
-                # Note: We prefer docker-compose-plugin from apt repos when available for security
-                if apt-get install -y docker-compose-plugin 2>/dev/null; then
-                        echo "docker-compose-plugin installed successfully"
-                        # Create wrapper script for docker-compose command compatibility
-                        # docker-compose-plugin provides 'docker compose' but scripts use 'docker-compose'
-                        # Note: Using single quotes in heredoc ('EOF') prevents variable expansion for robustness
-                        if [ ! -f /usr/local/bin/docker-compose ]; then
-                                echo "Creating docker-compose wrapper script..."
-                                # Create wrapper that forwards all commands to 'docker compose'
-                                # Exit on failure is intentional - without this wrapper, all control scripts will fail
-                                if cat > /usr/local/bin/docker-compose << 'EOF'
+        # Verify Docker is installed
+        if ! command -v docker &> /dev/null; then
+                echo "ERROR: Docker installation failed - docker command not found"
+                exit 1
+        fi
+        
+        # Install Docker Compose v2 plugin from official Docker repositories
+        echo "Installing Docker Compose v2 plugin from official Docker repositories..."
+        if ! apt-get install -y docker-compose-plugin; then
+                echo "ERROR: Failed to install docker-compose-plugin from Docker repositories"
+                echo "This installer only supports Docker Compose v2"
+                exit 1
+        fi
+        
+        # Verify Docker Compose v2 is installed
+        if ! docker compose version &> /dev/null; then
+                echo "ERROR: Docker Compose v2 installation failed - 'docker compose' command not working"
+                exit 1
+        fi
+        
+        # Create wrapper script for backward compatibility with docker-compose command
+        # This allows existing scripts using 'docker-compose' to work with 'docker compose'
+        echo "Creating docker-compose wrapper for backward compatibility..."
+        if [ ! -f /usr/local/bin/docker-compose ]; then
+                if cat > /usr/local/bin/docker-compose << 'EOF'
 #!/bin/sh
 # Wrapper script to provide docker-compose command using docker compose plugin
 exec docker compose "$@"
 EOF
-                                then
-                                        chmod +x /usr/local/bin/docker-compose
-                                        echo "docker-compose wrapper created successfully"
-                                else
-                                        echo "ERROR: Failed to create docker-compose wrapper script"
-                                        exit 1
-                                fi
-                        else
-                                # Skip wrapper creation if docker-compose already exists
-                                # This preserves existing installations (from apt or manual install)
-                                echo "docker-compose command already exists, skipping wrapper creation"
-                        fi
-                else
-                        echo "Installing docker-compose from GitHub releases..."
-                        # Fallback to GitHub releases for official Docker Compose binary
-                        # Downloaded from official Docker GitHub repository over HTTPS
-                        curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
+                then
                         chmod +x /usr/local/bin/docker-compose
-                        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose 2>/dev/null || true
+                        echo "docker-compose wrapper created successfully"
+                else
+                        echo "ERROR: Failed to create docker-compose wrapper script"
+                        exit 1
                 fi
         else
-                # For Debian 10-11 use apt package
-                apt-get install -y docker-compose
+                echo "docker-compose command already exists at /usr/local/bin/docker-compose"
+        fi
+        
+        # Verify the wrapper works
+        if ! /usr/local/bin/docker-compose version &> /dev/null; then
+                echo "ERROR: docker-compose wrapper verification failed"
+                exit 1
         fi
         
         # Enable and start Docker
+        echo "Enabling and starting Docker service..."
         systemctl enable docker
         systemctl start docker
+        
+        # Verify Docker service is running
+        if ! systemctl is-active --quiet docker; then
+                echo "ERROR: Docker service failed to start"
+                exit 1
+        fi
+        
         figlet "docker.io"
         
         echo "Set userland-proxy to false..."
         echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+        systemctl restart docker
+        sleep 2
 }
 
-        if [ $VERSION = 10 ] || [ $VERSION = 11 ]; then
+        if [ $VERSION = 11 ] || [ $VERSION = 12 ] || [ $VERSION = 13 ]; then
+                echo "Installing for Debian $VERSION with Docker Compose v2..."
                 install_docker_and_dependencies $VERSION
-                                
-        elif [ $VERSION = 12 ] || [ $VERSION = 13 ]; then
-                # Debian 12 (Bookworm) and 13 (Trixie) support
-                echo "Installing for Debian $VERSION..."
-                install_docker_and_dependencies $VERSION
-                                
+        elif [ $VERSION = 10 ]; then
+                echo "ERROR: Debian 10 is no longer supported by this installer"
+                echo "This installer now requires Debian 11, 12, or 13 for Docker Compose v2 support"
+                echo "Please upgrade your system to Debian 11 or later"
+                exit 1
         else
-        echo "-------------------------------------------------------------------------------------------"
-        echo "Operating system not supported! Please check you are running Debian 10-13. Exiting....."
-        echo "-------------------------------------------------------------------------------------------"
-        exit 0
-fi
+                echo "-------------------------------------------------------------------------------------------"
+                echo "Operating system not supported! Please check you are running Debian 11, 12, or 13. Exiting....."
+                echo "-------------------------------------------------------------------------------------------"
+                exit 0
+        fi
 echo "Done."
 echo "------------------------------------------------------------------------------"
 echo "Installing control scripts /usr/local/sbin....."
@@ -896,6 +923,7 @@ figlet "WhipTAIL'"
         hblink-initial-setup
 sleep 1
 echo "Done."
+sleep 2
 echo ""
 echo ""
 echo "*************************************************************************"
@@ -920,6 +948,19 @@ echo ""
 echo "                      Your IP address is $LOCAL_IP                       "
 echo ""
 echo "               Your running on $ARC with Debian $VERSION                 "
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "                          Installed Versions                                  "
+echo "------------------------------------------------------------------------------"
+echo "Docker version:"
+docker --version
+echo ""
+echo "Docker Compose version:"
+docker compose version
+echo ""
+echo "Note: This installation uses Docker Compose v2 (docker compose command)"
+echo "      The legacy docker-compose v1 is not supported"
+echo "------------------------------------------------------------------------------"
 echo ""           
 echo "                     Thanks for using this script.                       "
 echo "                 Copyright © 2024 Shane Daley - M0VUB                    "
