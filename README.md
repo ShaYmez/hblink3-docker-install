@@ -152,7 +152,7 @@ Within this installation includes the new HBMonv2 by Weldek SP2ONG
 - The systemd service automatically uses the virtual environment's Python interpreter
 - This approach eliminates "externally-managed-environment" errors and conflicts with system packages
 
-**Debian 10-11:** Standard pip installation to system Python is used for backward compatibility.
+**Debian 11:** Standard pip installation to system Python is used for backward compatibility, as PEP 668 restrictions don't apply to Debian 11.
 
 This ensures clean, maintainable installations that follow modern Python best practices while maintaining compatibility with older Debian versions.
 

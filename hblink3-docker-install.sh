@@ -280,7 +280,7 @@ pip_install() {
                         return 1
                 fi
         else
-                # For Debian 10-11, use standard pip installation
+                # For Debian 11, use standard pip installation (pre-PEP 668)
                 echo "Installing Python packages for Debian $VERSION: $args"
                 if pip3 install $args; then
                         echo "Successfully installed: $args"
