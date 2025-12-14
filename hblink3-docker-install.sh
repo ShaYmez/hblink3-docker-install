@@ -22,18 +22,19 @@
 #   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ##################################################################################
 #
-# A tool to install HBlink3 Docker with Debian 10-13 / Ubuntu 20.04 support.
+# A tool to install HBlink3 Docker with Debian 11, 12, 13 and Ubuntu 22.04, 24.04 LTS support.
 # This essentially is a HBlink3 server fully installed with dashboard ready to go.
-# Step 1: Install Debian 10, 11, 12, or 13 (Trixie) or Ubuntu 20.04 and make sure it has internet and is up to date.
+# Step 1: Install Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS and make sure it has internet and is up to date.
 # Step 2: Run this script on the computer.
 # Step 3: Reboot after installation.
-# This is a docker version and you can use the following comands to control / maintain your server
+# This is a docker version and you can use the following commands to control / maintain your server
 # cd /etc/hblink3
-# docker-compose up -d (starts the hblink3 docker container)
-# docker-compose down (shuts down the hblink container and stops the service)
-# docker-compose pull (updates the container to the latest docker image)
+# docker compose up -d (starts the hblink3 docker container) - Note: uses Docker Compose v2
+# docker compose down (shuts down the hblink container and stops the service)
+# docker compose pull (updates the container to the latest docker image)
+# For backward compatibility, docker-compose (with hyphen) is also supported via a wrapper script
 # systemctl |stop|start|restart|status hbmon (controls the HBMonv2 dash service)
-# logs can be found in var/log/hblink or docker comand "docker container logs hblink"
+# logs can be found in var/log/hblink or docker command "docker container logs hblink"
 #Lets begin-------------------------------------------------------------------------------------------------
 if [ "$EUID" -ne 0 ];
 then
@@ -41,28 +42,57 @@ then
   echo "You Must be root to run this script!!"
   exit 1
 fi
-if [ ! -e "/etc/debian_version" ]
-then
-  echo ""
-  echo "This script is only tested in Debian 10, 11, 12 & 13 (Trixie)."
-  exit 0
+
+# Detect OS type and version
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    OS_VERSION=$VERSION_ID
+else
+    echo "ERROR: Cannot detect operating system"
+    exit 1
 fi
+
+# Check for supported OS
+if [ "$OS" != "debian" ] && [ "$OS" != "ubuntu" ]; then
+    echo ""
+    echo "ERROR: This script only supports Debian and Ubuntu distributions"
+    echo "Detected OS: $OS"
+    exit 1
+fi
+
+# Validate Ubuntu versions
+if [ "$OS" = "ubuntu" ]; then
+    if [ "$OS_VERSION" != "22.04" ] && [ "$OS_VERSION" != "24.04" ]; then
+        echo ""
+        echo "ERROR: Only Ubuntu 22.04 LTS and 24.04 LTS are supported"
+        echo "Detected Ubuntu version: $OS_VERSION"
+        exit 1
+    fi
+    echo "Detected: Ubuntu $OS_VERSION LTS"
+fi
+
+# Validate Debian versions
+if [ "$OS" = "debian" ]; then
+    VERSION=$(sed 's/\..*//' /etc/debian_version)
+    if [ "$VERSION" != "11" ] && [ "$VERSION" != "12" ] && [ "$VERSION" != "13" ]; then
+        echo ""
+        echo "ERROR: Only Debian 11, 12, and 13 are supported"
+        echo "Detected Debian version: $VERSION"
+        exit 1
+    fi
+    echo "Detected: Debian $VERSION"
+fi
+
 DIRDIR=$(pwd)
 LOCAL_IP=$(ip a | grep inet | grep "eth0\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
 EXTERNAL_IP=$(curl -s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null || echo "Unable to detect")
 ARC=$(lscpu | grep Arch | awk '{print $2}')
-VERSION=$(sed 's/\..*//' /etc/debian_version)
-ARMv7l=https://get.docker.com | sh
-ARMv8l=https://get.docker.com | sh
-X32=https://get.docker.com | sh
-X64=https://get.docker.com | sh
 INSDIR=/opt/tmp/
 HBLINKTMP=/opt/tmp/hblink3
 HBMONDIR=/opt/HBMonv2/
 HBDIR=/etc/hblink3/
-DEP="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
-DEP1="wget curl git sudo python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
-DEP2="wget sudo curl git python3 python3-dev python3-pip libffi-dev libssl-dev conntrack sed cargo apache2 php php-mysqli snapd figlet ca-certificates gnupg lsb-release"
+DEP="wget curl git sudo python3 python3-dev python3-pip python3-venv libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
 HBGITREPO=https://github.com/ShaYmez/hblink3.git
 HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
 echo ""
@@ -71,97 +101,145 @@ echo "Downloading and installing required software & dependencies....."
 echo "------------------------------------------------------------------------------"
 
 install_docker_and_dependencies() {
-        local version=$1
-        echo "Detected Debian version: $version"
+        echo "Installing Docker and dependencies..."
         
-        # Install base dependencies
+        # Install base dependencies (python3-venv is included for all versions for consistency)
+        echo "Installing dependencies..."
         apt-get update
-        # For Debian 12+, add python3-venv to dependencies (PEP 668 compliance)
-        if [ $version -ge 12 ]; then
-                apt-get install -y $DEP python3-venv
-        else
-                apt-get install -y $DEP
-        fi
+        apt-get install -y $DEP
         sleep 2
         
         # Remove old Docker versions if present
-        apt-get remove docker docker-engine docker.io containerd runc 2>/dev/null || true
+        echo "Removing old Docker versions if present..."
+        apt-get remove docker docker-engine docker.io containerd runc docker-compose 2>/dev/null || true
+        
+        # Determine Docker repository URL based on OS
+        if [ "$OS" = "ubuntu" ]; then
+                DOCKER_REPO_URL="https://download.docker.com/linux/ubuntu"
+                echo "Configuring Docker repository for Ubuntu..."
+        else
+                DOCKER_REPO_URL="https://download.docker.com/linux/debian"
+                echo "Configuring Docker repository for Debian..."
+        fi
         
         # Add Docker GPG key
-        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        echo "Adding Docker GPG key..."
+        curl -fsSL ${DOCKER_REPO_URL}/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        
+        if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
+                echo "ERROR: Failed to download Docker GPG key"
+                exit 1
+        fi
         
         # Add Docker repository
+        echo "Adding Docker repository..."
         echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] ${DOCKER_REPO_URL} \
         $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
         
-        # Install Docker
+        # Install Docker Engine from official Docker repositories
+        echo "Installing Docker Engine from official Docker repositories..."
         apt-get update
-        apt-get install -y docker-ce docker-ce-cli containerd.io
+        if ! apt-get install -y docker-ce docker-ce-cli containerd.io; then
+                echo "ERROR: Failed to install Docker Engine"
+                echo "Please check your internet connection and Debian version compatibility"
+                exit 1
+        fi
         
-        # Install docker-compose based on Debian version
-        if [ $version -ge 12 ]; then
-                # For Debian 12+ use docker-compose-plugin or install from GitHub
-                # Note: We prefer docker-compose-plugin from apt repos when available for security
-                if apt-get install -y docker-compose-plugin 2>/dev/null; then
-                        echo "docker-compose-plugin installed successfully"
-                        # Create wrapper script for docker-compose command compatibility
-                        # docker-compose-plugin provides 'docker compose' but scripts use 'docker-compose'
-                        # Note: Using single quotes in heredoc ('EOF') prevents variable expansion for robustness
-                        if [ ! -f /usr/local/bin/docker-compose ]; then
-                                echo "Creating docker-compose wrapper script..."
-                                # Create wrapper that forwards all commands to 'docker compose'
-                                # Exit on failure is intentional - without this wrapper, all control scripts will fail
-                                if cat > /usr/local/bin/docker-compose << 'EOF'
+        # Verify Docker is installed
+        if ! command -v docker &> /dev/null; then
+                echo "ERROR: Docker installation failed - docker command not found"
+                exit 1
+        fi
+        
+        # Install Docker Compose v2 plugin from official Docker repositories
+        echo "Installing Docker Compose v2 plugin from official Docker repositories..."
+        if ! apt-get install -y docker-compose-plugin; then
+                echo "ERROR: Failed to install docker-compose-plugin from Docker repositories"
+                echo "This installer only supports Docker Compose v2"
+                exit 1
+        fi
+        
+        # Verify Docker Compose v2 is installed
+        if ! docker compose version &> /dev/null; then
+                echo "ERROR: Docker Compose v2 installation failed - 'docker compose' command not working"
+                exit 1
+        fi
+        
+        # Create wrapper script for backward compatibility with docker-compose command
+        # This allows existing scripts using 'docker-compose' to work with 'docker compose'
+        echo "Creating docker-compose wrapper for backward compatibility..."
+        if [ ! -f /usr/local/bin/docker-compose ]; then
+                if cat > /usr/local/bin/docker-compose << 'EOF'
 #!/bin/sh
 # Wrapper script to provide docker-compose command using docker compose plugin
 exec docker compose "$@"
 EOF
-                                then
-                                        chmod +x /usr/local/bin/docker-compose
-                                        echo "docker-compose wrapper created successfully"
-                                else
-                                        echo "ERROR: Failed to create docker-compose wrapper script"
-                                        exit 1
-                                fi
-                        else
-                                # Skip wrapper creation if docker-compose already exists
-                                # This preserves existing installations (from apt or manual install)
-                                echo "docker-compose command already exists, skipping wrapper creation"
-                        fi
-                else
-                        echo "Installing docker-compose from GitHub releases..."
-                        # Fallback to GitHub releases for official Docker Compose binary
-                        # Downloaded from official Docker GitHub repository over HTTPS
-                        curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/local/bin/docker-compose
+                then
                         chmod +x /usr/local/bin/docker-compose
-                        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose 2>/dev/null || true
+                        echo "docker-compose wrapper created successfully"
+                else
+                        echo "ERROR: Failed to create docker-compose wrapper script"
+                        exit 1
                 fi
         else
-                # For Debian 10-11 use apt package
-                apt-get install -y docker-compose
+                echo "docker-compose command already exists at /usr/local/bin/docker-compose"
+        fi
+        
+        # Verify the wrapper works
+        if ! /usr/local/bin/docker-compose version &> /dev/null; then
+                echo "ERROR: docker-compose wrapper verification failed"
+                exit 1
         fi
         
         # Enable and start Docker
+        echo "Enabling and starting Docker service..."
         systemctl enable docker
         systemctl start docker
+        
+        # Verify Docker service is running
+        if ! systemctl is-active --quiet docker; then
+                echo "ERROR: Docker service failed to start"
+                exit 1
+        fi
+        
         figlet "docker.io"
         
         echo "Set userland-proxy to false..."
         echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+        systemctl restart docker
+        sleep 2
 }
 
-        if [ $VERSION = 10 ] || [ $VERSION = 11 ]; then
-                install_docker_and_dependencies $VERSION
-                                
-        elif [ $VERSION = 12 ] || [ $VERSION = 13 ]; then
-                # Debian 12 (Bookworm) and 13 (Trixie) support
-                echo "Installing for Debian $VERSION..."
-                install_docker_and_dependencies $VERSION
-                                
+# Run Docker installation for supported OS versions
+if [ "$OS" = "debian" ]; then
+        if [ "$VERSION" = "11" ] || [ "$VERSION" = "12" ] || [ "$VERSION" = "13" ]; then
+                echo "Installing for Debian $VERSION with Docker Compose v2..."
+                install_docker_and_dependencies
+        elif [ "$VERSION" = "10" ]; then
+                echo "ERROR: Debian 10 is no longer supported by this installer"
+                echo "This installer now requires Debian 11, 12, or 13 for Docker Compose v2 support"
+                echo "Please upgrade your system to Debian 11 or later"
+                exit 1
         else
+                echo "-------------------------------------------------------------------------------------------"
+                echo "Operating system not supported! Please check you are running Debian 11, 12, or 13. Exiting....."
+                echo "-------------------------------------------------------------------------------------------"
+                exit 0
+        fi
+elif [ "$OS" = "ubuntu" ]; then
+        if [ "$OS_VERSION" = "22.04" ] || [ "$OS_VERSION" = "24.04" ]; then
+                echo "Installing for Ubuntu $OS_VERSION LTS with Docker Compose v2..."
+                install_docker_and_dependencies
+        else
+                echo "-------------------------------------------------------------------------------------------"
+                echo "Operating system not supported! Please check you are running Ubuntu 22.04 or 24.04 LTS. Exiting....."
+                echo "-------------------------------------------------------------------------------------------"
+                exit 0
+        fi
+else
         echo "-------------------------------------------------------------------------------------------"
-        echo "Operating system not supported! Please check you are running Debian 10-13. Exiting....."
+        echo "Operating system not supported! Exiting....."
         echo "-------------------------------------------------------------------------------------------"
         exit 0
 fi
@@ -235,64 +313,49 @@ echo "Installing HBMonv2 configuration....."
 echo "------------------------------------------------------------------------------"
 sleep 2
 
-# Helper function to install pip packages with Debian 12+ compatibility
+# Helper function to install pip packages in virtual environment
 pip_install() {
         local args="$@"
-        if [ $VERSION -ge 12 ]; then
-                # For Debian 12+, use virtual environment (PEP 668 compliant)
-                echo "Installing Python packages for Debian $VERSION: $args"
-                if [ -z "$VIRTUAL_ENV" ]; then
-                        echo "ERROR: Virtual environment not activated"
-                        return 1
-                fi
-                if pip3 install $args; then
-                        echo "Successfully installed: $args"
-                        return 0
-                else
-                        echo "ERROR: Failed to install: $args"
-                        return 1
-                fi
+        echo "Installing Python packages: $args"
+        if [ -z "$VIRTUAL_ENV" ]; then
+                echo "ERROR: Virtual environment not activated"
+                return 1
+        fi
+        if pip3 install $args; then
+                echo "Successfully installed: $args"
+                return 0
         else
-                # For Debian 10-11, use standard pip installation
-                echo "Installing Python packages for Debian $VERSION: $args"
-                if pip3 install $args; then
-                        echo "Successfully installed: $args"
-                        return 0
-                else
-                        echo "ERROR: Failed to install: $args"
-                        return 1
-                fi
+                echo "ERROR: Failed to install: $args"
+                return 1
         fi
 }
 
 echo "Installing Python dependencies..."
 cd $HBMONDIR
 
-# For Debian 12+, create and use a virtual environment (modern PEP 668 compliant approach)
-if [ $VERSION -ge 12 ]; then
-        echo "Creating Python virtual environment for Debian $VERSION..."
-        
-        # Create virtual environment
-        if [ ! -d "$HBMONDIR/venv" ]; then
-                python3 -m venv "$HBMONDIR/venv" || { echo "ERROR: Failed to create virtual environment"; exit 1; }
-                echo "Virtual environment created successfully at $HBMONDIR/venv"
-        else
-                echo "Virtual environment already exists at $HBMONDIR/venv"
-        fi
-        
-        # Activate virtual environment
-        source "$HBMONDIR/venv/bin/activate" || { echo "ERROR: Failed to activate virtual environment"; exit 1; }
-        # Verify activation by checking VIRTUAL_ENV is set
-        if [ -z "$VIRTUAL_ENV" ]; then
-                echo "ERROR: Virtual environment activation failed - VIRTUAL_ENV not set"
-                exit 1
-        fi
-        echo "Virtual environment activated"
-        
-        # Upgrade pip in the virtual environment
-        if ! pip3 install --upgrade pip; then
-                echo "WARNING: Failed to upgrade pip in virtual environment, continuing with existing version..."
-        fi
+# Create and use a virtual environment (modern approach for all Debian versions)
+echo "Creating Python virtual environment..."
+
+# Create virtual environment
+if [ ! -d "$HBMONDIR/venv" ]; then
+        python3 -m venv "$HBMONDIR/venv" || { echo "ERROR: Failed to create virtual environment"; exit 1; }
+        echo "Virtual environment created successfully at $HBMONDIR/venv"
+else
+        echo "Virtual environment already exists at $HBMONDIR/venv"
+fi
+
+# Activate virtual environment
+source "$HBMONDIR/venv/bin/activate" || { echo "ERROR: Failed to activate virtual environment"; exit 1; }
+# Verify activation by checking VIRTUAL_ENV is set
+if [ -z "$VIRTUAL_ENV" ]; then
+        echo "ERROR: Virtual environment activation failed - VIRTUAL_ENV not set"
+        exit 1
+fi
+echo "Virtual environment activated"
+
+# Upgrade pip in the virtual environment
+if ! pip3 install --upgrade pip; then
+        echo "WARNING: Failed to upgrade pip in virtual environment, continuing with existing version..."
 fi
 
 # Install setuptools and wheel first
@@ -374,25 +437,23 @@ LOG_NAME        = 'hbmon.log'
 EOF
                 cp utils/hbmon.service /lib/systemd/system/
                 
-                # For Debian 12+, update the service file to use virtual environment
-                if [ $VERSION -ge 12 ]; then
-                        echo "Updating hbmon.service to use virtual environment..."
-                        # Update ExecStart to use venv Python (only if not already using venv)
-                        if ! grep -q "$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
-                                # Replace common Python interpreter paths with venv path
-                                sed -i "s|ExecStart=/usr/bin/python3|ExecStart=$HBMONDIR/venv/bin/python3|g" /lib/systemd/system/hbmon.service
-                                sed -i "s|ExecStart=python3 |ExecStart=$HBMONDIR/venv/bin/python3 |g" /lib/systemd/system/hbmon.service
-                                
-                                # Verify the service file was updated correctly
-                                if grep -q "ExecStart=$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
-                                        echo "Service file updated to use virtual environment"
-                                else
-                                        echo "WARNING: Service file update may not have completed correctly"
-                                        echo "Please manually verify /lib/systemd/system/hbmon.service uses $HBMONDIR/venv/bin/python3"
-                                fi
+                # Update the service file to use virtual environment (for all Debian versions)
+                echo "Updating hbmon.service to use virtual environment..."
+                # Update ExecStart to use venv Python (only if not already using venv)
+                if ! grep -q "$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
+                        # Replace common Python interpreter paths with venv path
+                        sed -i "s|ExecStart=/usr/bin/python3|ExecStart=$HBMONDIR/venv/bin/python3|g" /lib/systemd/system/hbmon.service
+                        sed -i "s|ExecStart=python3 |ExecStart=$HBMONDIR/venv/bin/python3 |g" /lib/systemd/system/hbmon.service
+                        
+                        # Verify the service file was updated correctly
+                        if grep -q "ExecStart=$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
+                                echo "Service file updated to use virtual environment"
                         else
-                                echo "Service file already configured to use virtual environment"
+                                echo "WARNING: Service file update may not have completed correctly"
+                                echo "Please manually verify /lib/systemd/system/hbmon.service uses $HBMONDIR/venv/bin/python3"
                         fi
+                else
+                        echo "Service file already configured to use virtual environment"
                 fi
                 
                 cp utils/lastheard /etc/cron.daily/
@@ -896,6 +957,7 @@ figlet "WhipTAIL'"
         hblink-initial-setup
 sleep 1
 echo "Done."
+sleep 2
 echo ""
 echo ""
 echo "*************************************************************************"
@@ -919,7 +981,24 @@ echo "            https://github.com/ShaYmez/hblink3-docker-install            "
 echo ""
 echo "                      Your IP address is $LOCAL_IP                       "
 echo ""
-echo "               Your running on $ARC with Debian $VERSION                 "
+if [ "$OS" = "ubuntu" ]; then
+        echo "               You're running on $ARC with Ubuntu $OS_VERSION LTS                 "
+else
+        echo "               You're running on $ARC with Debian $VERSION                 "
+fi
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "                          Installed Versions                                  "
+echo "------------------------------------------------------------------------------"
+echo "Docker version:"
+docker --version
+echo ""
+echo "Docker Compose version:"
+docker compose version
+echo ""
+echo "Note: This installation uses Docker Compose v2 (docker compose command)"
+echo "      The legacy docker-compose v1 is not supported"
+echo "------------------------------------------------------------------------------"
 echo ""           
 echo "                     Thanks for using this script.                       "
 echo "                 Copyright © 2024 Shane Daley - M0VUB                    "
