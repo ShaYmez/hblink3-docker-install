@@ -22,9 +22,9 @@
 #   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ##################################################################################
 #
-# A tool to install HBlink3 Docker with Debian 11, 12, and 13 support.
+# A tool to install HBlink3 Docker with Debian 11, 12, 13 and Ubuntu 22.04, 24.04 LTS support.
 # This essentially is a HBlink3 server fully installed with dashboard ready to go.
-# Step 1: Install Debian 11, 12, or 13 (Trixie) and make sure it has internet and is up to date.
+# Step 1: Install Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS and make sure it has internet and is up to date.
 # Step 2: Run this script on the computer.
 # Step 3: Reboot after installation.
 # This is a docker version and you can use the following commands to control / maintain your server
@@ -42,17 +42,52 @@ then
   echo "You Must be root to run this script!!"
   exit 1
 fi
-if [ ! -e "/etc/debian_version" ]
-then
-  echo ""
-  echo "This script is only tested in Debian 11, 12 & 13 (Trixie)."
-  exit 0
+
+# Detect OS type and version
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    OS_VERSION=$VERSION_ID
+else
+    echo "ERROR: Cannot detect operating system"
+    exit 1
 fi
+
+# Check for supported OS
+if [ "$OS" != "debian" ] && [ "$OS" != "ubuntu" ]; then
+    echo ""
+    echo "ERROR: This script only supports Debian and Ubuntu distributions"
+    echo "Detected OS: $OS"
+    exit 1
+fi
+
+# Validate Ubuntu versions
+if [ "$OS" = "ubuntu" ]; then
+    if [ "$OS_VERSION" != "22.04" ] && [ "$OS_VERSION" != "24.04" ]; then
+        echo ""
+        echo "ERROR: Only Ubuntu 22.04 LTS and 24.04 LTS are supported"
+        echo "Detected Ubuntu version: $OS_VERSION"
+        exit 1
+    fi
+    echo "Detected: Ubuntu $OS_VERSION LTS"
+fi
+
+# Validate Debian versions
+if [ "$OS" = "debian" ]; then
+    VERSION=$(sed 's/\..*//' /etc/debian_version)
+    if [ "$VERSION" != "11" ] && [ "$VERSION" != "12" ] && [ "$VERSION" != "13" ]; then
+        echo ""
+        echo "ERROR: Only Debian 11, 12, and 13 are supported"
+        echo "Detected Debian version: $VERSION"
+        exit 1
+    fi
+    echo "Detected: Debian $VERSION"
+fi
+
 DIRDIR=$(pwd)
 LOCAL_IP=$(ip a | grep inet | grep "eth0\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
 EXTERNAL_IP=$(curl -s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null || echo "Unable to detect")
 ARC=$(lscpu | grep Arch | awk '{print $2}')
-VERSION=$(sed 's/\..*//' /etc/debian_version)
 INSDIR=/opt/tmp/
 HBLINKTMP=/opt/tmp/hblink3
 HBMONDIR=/opt/HBMonv2/
@@ -66,8 +101,7 @@ echo "Downloading and installing required software & dependencies....."
 echo "------------------------------------------------------------------------------"
 
 install_docker_and_dependencies() {
-        local version=$1
-        echo "Detected Debian version: $version"
+        echo "Installing Docker and dependencies..."
         
         # Install base dependencies (python3-venv is included for all versions for consistency)
         echo "Installing dependencies..."
@@ -79,9 +113,18 @@ install_docker_and_dependencies() {
         echo "Removing old Docker versions if present..."
         apt-get remove docker docker-engine docker.io containerd runc docker-compose 2>/dev/null || true
         
+        # Determine Docker repository URL based on OS
+        if [ "$OS" = "ubuntu" ]; then
+                DOCKER_REPO_URL="https://download.docker.com/linux/ubuntu"
+                echo "Configuring Docker repository for Ubuntu..."
+        else
+                DOCKER_REPO_URL="https://download.docker.com/linux/debian"
+                echo "Configuring Docker repository for Debian..."
+        fi
+        
         # Add Docker GPG key
         echo "Adding Docker GPG key..."
-        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        curl -fsSL ${DOCKER_REPO_URL}/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         
         if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
                 echo "ERROR: Failed to download Docker GPG key"
@@ -91,7 +134,7 @@ install_docker_and_dependencies() {
         # Add Docker repository
         echo "Adding Docker repository..."
         echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] ${DOCKER_REPO_URL} \
         $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
         
         # Install Docker Engine from official Docker repositories
@@ -168,10 +211,12 @@ EOF
         sleep 2
 }
 
-        if [ $VERSION = 11 ] || [ $VERSION = 12 ] || [ $VERSION = 13 ]; then
+# Run Docker installation for supported OS versions
+if [ "$OS" = "debian" ]; then
+        if [ "$VERSION" = "11" ] || [ "$VERSION" = "12" ] || [ "$VERSION" = "13" ]; then
                 echo "Installing for Debian $VERSION with Docker Compose v2..."
-                install_docker_and_dependencies $VERSION
-        elif [ $VERSION = 10 ]; then
+                install_docker_and_dependencies
+        elif [ "$VERSION" = "10" ]; then
                 echo "ERROR: Debian 10 is no longer supported by this installer"
                 echo "This installer now requires Debian 11, 12, or 13 for Docker Compose v2 support"
                 echo "Please upgrade your system to Debian 11 or later"
@@ -182,6 +227,22 @@ EOF
                 echo "-------------------------------------------------------------------------------------------"
                 exit 0
         fi
+elif [ "$OS" = "ubuntu" ]; then
+        if [ "$OS_VERSION" = "22.04" ] || [ "$OS_VERSION" = "24.04" ]; then
+                echo "Installing for Ubuntu $OS_VERSION LTS with Docker Compose v2..."
+                install_docker_and_dependencies
+        else
+                echo "-------------------------------------------------------------------------------------------"
+                echo "Operating system not supported! Please check you are running Ubuntu 22.04 or 24.04 LTS. Exiting....."
+                echo "-------------------------------------------------------------------------------------------"
+                exit 0
+        fi
+else
+        echo "-------------------------------------------------------------------------------------------"
+        echo "Operating system not supported! Exiting....."
+        echo "-------------------------------------------------------------------------------------------"
+        exit 0
+fi
 echo "Done."
 echo "------------------------------------------------------------------------------"
 echo "Installing control scripts /usr/local/sbin....."
@@ -920,7 +981,11 @@ echo "            https://github.com/ShaYmez/hblink3-docker-install            "
 echo ""
 echo "                      Your IP address is $LOCAL_IP                       "
 echo ""
-echo "               You're running on $ARC with Debian $VERSION                 "
+if [ "$OS" = "ubuntu" ]; then
+        echo "               You're running on $ARC with Ubuntu $OS_VERSION LTS                 "
+else
+        echo "               You're running on $ARC with Debian $VERSION                 "
+fi
 echo ""
 echo "------------------------------------------------------------------------------"
 echo "                          Installed Versions                                  "

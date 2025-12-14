@@ -1,11 +1,11 @@
 # HBlink3 Docker Installer
-**Version 1.5.0** - Debian 11 / 12 / 13 (Trixie) Support!!
+**Version 1.5.0** - Debian 11 / 12 / 13 and Ubuntu 22.04 / 24.04 LTS Support!!
 =======
-This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 11, 12, and 13 (Trixie). 
+This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 11, 12, 13 and Ubuntu 22.04, 24.04 LTS. 
 
 **Important:** This installer requires Docker Compose v2 (provided by the docker-compose-plugin package). The legacy docker-compose v1 standalone package is not supported. The installer automatically installs Docker Engine and Docker Compose v2 from the official Docker repositories.
 
-**Note:** Debian 12 (Bookworm) and 13 (Trixie) support has been added with proper PEP 668 compliant Python package management using virtual environments. HBMonv2 now runs in an isolated Python virtual environment on Debian 12+. See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
+**Note:** Debian 12 (Bookworm) and 13 (Trixie) along with Ubuntu 22.04 and 24.04 LTS are fully supported with proper PEP 668 compliant Python package management using virtual environments. HBMonv2 now runs in an isolated Python virtual environment. See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
@@ -14,7 +14,7 @@ This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debia
 Parrot is built into this install (Default disabled, see below how to enable the parrot feature!
 
 ### Destructive Installer
-This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 11, 12, or 13 (Trixie).
+This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS.
 
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
@@ -31,7 +31,7 @@ This installer includes all the usual libs and packages including docker, apache
 install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine that has other software on it! YOU HAVE BEEN WARNED!
 
 ### Prerequisite
-The host system must be running Debian 11, 12, or 13 (Trixie). **Debian 10 is no longer supported** due to the requirement for Docker Compose v2. The installer has been tested on these Debian versions and works on most architectures. The system requires, at a minimum; 1 core, 512mb of ram, the required spec to run docker and additional processes! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+The host system must be running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS. **Debian 10 and Ubuntu 20.04 are no longer supported** due to the requirement for Docker Compose v2 and modern Python package management. The installer has been tested on these OS versions and works on most architectures. The system requires, at a minimum; 1 core, 512mb of ram, the required spec to run docker and additional processes! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 
 **Docker Compose v2:** This installer exclusively uses Docker Compose v2 from the official Docker repositories. The docker-compose-plugin package is automatically installed, providing the `docker compose` command (note the space). A compatibility wrapper is also created to support the legacy `docker-compose` command (with hyphen) for backward compatibility with existing scripts.
 
@@ -42,7 +42,7 @@ Make sure your system is up-to-date and pull Git from the apt repo.
 apt-get install -y git
 ```
 ### Installation
-1. Preferably a clean Debian 11, 12, or 13 (Trixie) system. **Debian 10 is no longer supported.** Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
+1. Preferably a clean Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS system. **Debian 10 and Ubuntu 20.04 are no longer supported.** Make sure your system is up to date with the latest apt repository database. You must be super user "root" to run this installer successfully.
 ```sh
 apt update
 sudo su
@@ -146,13 +146,13 @@ Within this installation includes the new HBMonv2 by Weldek SP2ONG
 
 ### Technical Details - Python Package Management
 
-The installer uses modern Python package management following PEP 668 standards for all supported Debian versions:
+The installer uses modern Python package management following PEP 668 standards for all supported OS versions:
 - HBMonv2 runs in an isolated Python virtual environment at `/opt/HBMonv2/venv`
 - All Python dependencies are installed within this virtual environment, avoiding system-wide package conflicts
 - The systemd service automatically uses the virtual environment's Python interpreter
 - This approach eliminates "externally-managed-environment" errors and conflicts with system packages
 
-This ensures clean, maintainable installations that follow modern Python best practices across all Debian versions.
+This ensures clean, maintainable installations that follow modern Python best practices across all supported Debian and Ubuntu versions.
 
 ## Easy Installation And Upgrade
 The installation can be upgraded either by the use of a future scripts or by manually backing up your configuration and re-running the install script. Also the ability and really cool feature of docker-compose is that its easy to update the container with fresh images! Run by a simple command. Make sure you are in the /etc/hblink3 dir.
