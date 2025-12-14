@@ -146,15 +146,13 @@ Within this installation includes the new HBMonv2 by Weldek SP2ONG
 
 ### Technical Details - Python Package Management
 
-**Debian 12+ (Bookworm/Trixie):** The installer uses modern Python package management following PEP 668 standards:
+The installer uses modern Python package management following PEP 668 standards for all supported Debian versions:
 - HBMonv2 runs in an isolated Python virtual environment at `/opt/HBMonv2/venv`
 - All Python dependencies are installed within this virtual environment, avoiding system-wide package conflicts
 - The systemd service automatically uses the virtual environment's Python interpreter
 - This approach eliminates "externally-managed-environment" errors and conflicts with system packages
 
-**Debian 11:** Standard pip installation to system Python is used for backward compatibility, as PEP 668 restrictions don't apply to Debian 11.
-
-This ensures clean, maintainable installations that follow modern Python best practices while maintaining compatibility with older Debian versions.
+This ensures clean, maintainable installations that follow modern Python best practices across all Debian versions.
 
 ## Easy Installation And Upgrade
 The installation can be upgraded either by the use of a future scripts or by manually backing up your configuration and re-running the install script. Also the ability and really cool feature of docker-compose is that its easy to update the container with fresh images! Run by a simple command. Make sure you are in the /etc/hblink3 dir.
