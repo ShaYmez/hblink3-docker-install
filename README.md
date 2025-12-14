@@ -3,7 +3,8 @@
 =======
 This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debian 11, 12, 13 and Ubuntu 22.04, 24.04 LTS. 
 
-**Important:** This installer requires Docker Compose v2 (provided by the docker-compose-plugin package). The legacy docker-compose v1 standalone package is not supported. The installer automatically installs Docker Engine and Docker Compose v2 from the official Docker repositories.
+**Important:** ### Destructive Installer
+This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS.
 
 **Note:** Debian 12 (Bookworm) and 13 (Trixie) along with Ubuntu 22.04 and 24.04 LTS are fully supported with proper PEP 668 compliant Python package management using virtual environments. HBMonv2 now runs in an isolated Python virtual environment. See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
@@ -12,9 +13,6 @@ This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debia
 ## Additional Features
 ### NEW! Parrot built in
 Parrot is built into this install (Default disabled, see below how to enable the parrot feature!
-
-### Destructive Installer
-This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS.
 
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
