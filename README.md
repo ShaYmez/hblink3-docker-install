@@ -14,7 +14,7 @@ This is a multi-arch docker installer for HBlink3 and HBmonV2 combined for Debia
 Parrot is built into this install (Default disabled, see below how to enable the parrot feature!
 
 ### Destructive Installer
-This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 10, 11, 12, or 13 (Trixie).
+This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 11, 12, or 13 (Trixie).
 
 ### Docker Multi-Arch build
 Docker container pre-built for multi-arch!
