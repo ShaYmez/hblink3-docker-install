@@ -1,5 +1,5 @@
 #!/bin/bash
-# Docker version alpine-3.18
+# Docker version alpine-3.20
 # Version 1.5.0 (13122025) hblink3-docker-installer
 # Docker upstream repo version 2.0.2
 # Release: Debian 13 (Trixie) Support Verified
@@ -938,7 +938,7 @@ echo "Starting HBlink....."
         cd $HBDIR
         docker-compose up -d
         sleep 5
-figlet "HBlink Master"
+figlet "HBlink3"
 sleep 3
         docker container logs hblink
 echo "Done."
@@ -946,7 +946,7 @@ sleep 2
 echo "Starting HBmon....."
         systemctl enable hbmon
         systemctl start hbmon
-figlet "HBMonV2"
+figlet "HBMonv2"
 echo ""
 echo ""
 clear
@@ -1001,7 +1001,7 @@ echo "      The legacy docker-compose v1 is not supported"
 echo "------------------------------------------------------------------------------"
 echo ""           
 echo "                     Thanks for using this script.                       "
-echo "                 Copyright © 2024 Shane Daley - M0VUB                    "
+echo "                 Copyright © 2025 Shane Daley - M0VUB                    "
 echo "      More information can be found @ https://github.com/shaymez/        "
 echo ""
 echo "*************************************************************************"
