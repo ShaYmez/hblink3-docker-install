@@ -47,6 +47,10 @@ if [ "$action" = "delete" ]; then
         fi
         out=$(php "$PASSWD" --delete "$user" 2>&1)
         rc=$?
+        if [ -f /etc/hblink3/tgmanager.users ] && getent group www-data >/dev/null 2>&1; then
+                chgrp www-data /etc/hblink3/tgmanager.users 2>/dev/null || true
+                chmod 640 /etc/hblink3/tgmanager.users
+        fi
         whiptail --title "Talkgroup Manager" --msgbox "$out" 12 60
         exit $rc
 fi
@@ -60,6 +64,15 @@ fi
 
 out=$(php "$PASSWD" --password "$pass" "$user" 2>&1)
 rc=$?
+users_file=/etc/hblink3/tgmanager.users
+if [ -f "$users_file" ]; then
+        if getent group www-data >/dev/null 2>&1; then
+                chgrp www-data "$users_file" 2>/dev/null || true
+                chmod 640 "$users_file"
+        else
+                chmod 644 "$users_file"
+        fi
+fi
 if [ -f "$PERMS" ] && [ -f /etc/hblink3/json/talkgroup_ids.json ]; then
         bash "$PERMS" /etc/hblink3/json/talkgroup_ids.json >/dev/null 2>&1 || true
 fi
