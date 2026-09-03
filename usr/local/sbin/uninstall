@@ -137,6 +137,7 @@ rm -f /usr/local/sbin/hblink-flush
 rm -f /usr/local/sbin/hblink-update
 rm -f /usr/local/sbin/hblink-upgrade
 rm -f /usr/local/sbin/hblink-dashboard-upgrade
+rm -f /usr/local/sbin/hblink-tgmanager-user
 rm -f /usr/local/sbin/hblink-stop
 rm -f /usr/local/sbin/hblink-start
 rm -f /usr/local/sbin/hblink-restart

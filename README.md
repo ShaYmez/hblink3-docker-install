@@ -211,6 +211,14 @@ Additive only (new files + Talkgroup Manager, leave existing pages):
 hblink-dashboard-upgrade --keep-pages
 ```
 
+Create a Talkgroup Manager login from the control menu (**Talkgroup Manager User**) or:
+
+```sh
+hblink-tgmanager-user
+```
+
+That writes `/etc/hblink3/tgmanager.users`. Then open `/tgmanager.php` (or Talkgroup Info → Login).
+
 ## Ports to forward
 ```sh
 http 80/tcp

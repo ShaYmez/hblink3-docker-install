@@ -20,7 +20,7 @@
 
 # Main MENU system.....
 while : ; do
-menuopt=$(whiptail --title "HBlink3 Control Version 2.0" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 26 58 15 \
+menuopt=$(whiptail --title "HBlink3 Control Version 2.0" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 28 60 16 \
 1 " Stop HBlink " \
 2 " Start HBlink " \
 3 " Restart HBlink " \
@@ -29,12 +29,13 @@ menuopt=$(whiptail --title "HBlink3 Control Version 2.0" --menu "Select option b
 6 " Edit HBlink Config " \
 7 " Edit HBlink Rules " \
 8 " Edit Dashboard Config " \
-9 " Upgrade HBMon to Docker " \
-10 " Upgrade Dashboard HTML " \
-11 " System Update / apt update " \
-12 " Uninstall HBlink3 " \
-13 " Reboot Entire Server " \
-14 " Shutdown Entire Server " 3>&1 1>&2 2>&3)
+9 " Talkgroup Manager User " \
+10 " Upgrade HBMon to Docker " \
+11 " Upgrade Dashboard HTML " \
+12 " System Update / apt update " \
+13 " Uninstall HBlink3 " \
+14 " Reboot Entire Server " \
+15 " Shutdown Entire Server " 3>&1 1>&2 2>&3)
 exitstatus=$?
 # Back-end HBlink3 menu
 if [ $exitstatus = 0 ]; then
@@ -61,16 +62,18 @@ sudo nano /etc/hblink3/rules.py ;;
 8)
 sudo nano /etc/hblink3/config.py ;;
 9)
-sudo /usr/local/sbin/hblink-upgrade ;;
+sudo /usr/local/sbin/hblink-tgmanager-user ;;
 10)
-sudo /usr/local/sbin/hblink-dashboard-upgrade ;;
+sudo /usr/local/sbin/hblink-upgrade ;;
 11)
-sudo apt-get update -y && sudo apt-get upgrade ;;
+sudo /usr/local/sbin/hblink-dashboard-upgrade ;;
 12)
-sudo /usr/local/sbin/hblink-uninstall ;;
+sudo apt-get update -y && sudo apt-get upgrade ;;
 13)
-sudo reboot ;;
+sudo /usr/local/sbin/hblink-uninstall ;;
 14)
+sudo reboot ;;
+15)
 sudo shutdown now ;
 esac
 done

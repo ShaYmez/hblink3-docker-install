@@ -144,6 +144,7 @@ if [ -d "${INSTALLER_PATH}/usr/local/sbin" ]; then
         cp -p "${INSTALLER_PATH}/usr/local/sbin/update" /usr/local/sbin/hblink-update
         cp -p "${INSTALLER_PATH}/usr/local/sbin/upgrade" /usr/local/sbin/hblink-upgrade
         cp -p "${INSTALLER_PATH}/usr/local/sbin/dashboard-upgrade" /usr/local/sbin/hblink-dashboard-upgrade
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/tgmanager-user" /usr/local/sbin/hblink-tgmanager-user
         cp -p "${INSTALLER_PATH}/usr/local/sbin/stop" /usr/local/sbin/hblink-stop
         cp -p "${INSTALLER_PATH}/usr/local/sbin/start" /usr/local/sbin/hblink-start
         cp -p "${INSTALLER_PATH}/usr/local/sbin/restart" /usr/local/sbin/hblink-restart

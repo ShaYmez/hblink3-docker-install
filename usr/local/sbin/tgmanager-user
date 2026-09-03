@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# HBLINK3 DOCKER CONTROL SCRIPTS V2.0
+# Version 1.5.1 (14122024)
+# Create, update, or delete a Talkgroup Manager login (hashed users file).
+
+#   Copyright (C) 2020-2026 Shane P. Daley  M0VUB <shane@freestar.network>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+
+if [ "$EUID" -ne 0 ]; then
+        echo ""
+        echo "You Must be root to run this script!!"
+        exit 1
+fi
+
+PASSWD=/opt/HBMonv2/utils/tgmanager-passwd
+PERMS=/opt/HBMonv2/utils/tgmanager-perms.sh
+
+if ! command -v php >/dev/null 2>&1; then
+        whiptail --title "Talkgroup Manager" --msgbox "php is not installed. Apache/PHP is required for the dashboard." 10 60
+        exit 1
+fi
+if [ ! -f "$PASSWD" ]; then
+        whiptail --title "Talkgroup Manager" --msgbox "${PASSWD} not found.\nRun hblink-dashboard-upgrade first." 10 60
+        exit 1
+fi
+
+action=$(whiptail --title "Talkgroup Manager User" --menu "Users file: /etc/hblink3/tgmanager.users\nLogin: /tgmanager.php" 16 60 3 \
+        add " Add or update a user " \
+        delete " Delete a user " \
+        3>&1 1>&2 2>&3) || exit 0
+
+user=$(whiptail --title "Talkgroup Manager User" --inputbox "Username:" 8 50 admin 3>&1 1>&2 2>&3) || exit 0
+user=$(printf '%s' "$user" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+if [ -z "$user" ] || echo "$user" | grep -q ':'; then
+        whiptail --title "Talkgroup Manager" --msgbox "Username cannot be empty or contain a colon." 8 50
+        exit 1
+fi
+
+if [ "$action" = "delete" ]; then
+        if ! whiptail --title "Talkgroup Manager User" --yesno "Delete user '${user}'?" 8 50; then
+                exit 0
+        fi
+        out=$(php "$PASSWD" --delete "$user" 2>&1)
+        rc=$?
+        whiptail --title "Talkgroup Manager" --msgbox "$out" 12 60
+        exit $rc
+fi
+
+pass=$(whiptail --title "Talkgroup Manager User" --passwordbox "Password for ${user}:" 8 50 3>&1 1>&2 2>&3) || exit 0
+confirm=$(whiptail --title "Talkgroup Manager User" --passwordbox "Confirm password for ${user}:" 8 50 3>&1 1>&2 2>&3) || exit 0
+if [ -z "$pass" ] || [ "$pass" != "$confirm" ]; then
+        whiptail --title "Talkgroup Manager" --msgbox "Passwords do not match, or the password was empty." 8 60
+        exit 1
+fi
+
+out=$(php "$PASSWD" --password "$pass" "$user" 2>&1)
+rc=$?
+if [ -f "$PERMS" ] && [ -f /etc/hblink3/json/talkgroup_ids.json ]; then
+        bash "$PERMS" /etc/hblink3/json/talkgroup_ids.json >/dev/null 2>&1 || true
+fi
+if [ $rc -eq 0 ]; then
+        whiptail --title "Talkgroup Manager" --msgbox "${out}\n\nLogin at /tgmanager.php or Talkgroup Info → Login." 12 60
+else
+        whiptail --title "Talkgroup Manager" --msgbox "$out" 12 60
+fi
+exit $rc
