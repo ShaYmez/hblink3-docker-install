@@ -15,7 +15,7 @@
 
 usage() {
         cat << 'EOF'
-Usage: hblink-dashboard-upgrade [--keep-pages]
+Usage: hblink-dashboard-upgrade [--keep-pages|--all]
 
 Refresh /var/www/html from /opt/HBMonv2 (git pull first).
 
@@ -25,6 +25,11 @@ Default:
   - Copy upstream HTML (pages, css/styles.php, footer, JS, Talkgroup Manager)
   - Never overwrite:
       include/config.php  buttons.html  buttons.php  existing files under img/
+
+  --all
+      Also replace include/config.php and buttons.html from upstream.
+      Existing files under img/ are still kept. Use on a test box or
+      when you want stock menu/branding.
 
   --keep-pages
       Additive only: new files plus Talkgroup Manager PHP. Existing pages,
@@ -43,9 +48,11 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 KEEP_PAGES=0
+RESET_BRANDING=0
 for arg in "$@"; do
         case "$arg" in
                 --keep-pages) KEEP_PAGES=1 ;;
+                --all) RESET_BRANDING=1; KEEP_PAGES=0 ;;
                 --update-pages) KEEP_PAGES=0 ;;
                 -h|--help) usage; exit 0 ;;
                 *)
@@ -159,7 +166,7 @@ while IFS= read -r -d '' f; do
         rel="${f#"$SRC"/}"
         dest="${DST}/${rel}"
 
-        if is_preserved "$rel" && [ -f "$dest" ]; then
+        if [ "$RESET_BRANDING" -eq 0 ] && is_preserved "$rel" && [ -f "$dest" ]; then
                 echo "Preserved  $rel"
                 PRESERVED=$((PRESERVED + 1))
                 continue
@@ -215,20 +222,30 @@ if [ -f "${HBMONDIR}/utils/tgmanager-perms.sh" ] && [ -f "${HBDIR}/json/talkgrou
         bash "${HBMONDIR}/utils/tgmanager-perms.sh" "${HBDIR}/json/talkgroup_ids.json" || true
 fi
 
+if [ -d "${INSTALLER_PATH}/usr/local/sbin" ]; then
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/dashboard-upgrade" /usr/local/sbin/hblink-dashboard-upgrade
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/menu" /usr/local/sbin/hblink-menu
+        chmod 755 /usr/local/sbin/hblink-dashboard-upgrade /usr/local/sbin/hblink-menu
+fi
+
 echo ""
 echo "*************************************************************************"
 echo " Dashboard HTML upgrade complete."
 echo " Added ${ADDED}  updated ${UPDATED}  preserved ${PRESERVED}  skipped ${SKIPPED}"
-echo " Kept: include/config.php, buttons.html, existing img/"
-if [ "$KEEP_PAGES" -eq 1 ]; then
+if [ "$RESET_BRANDING" -eq 1 ]; then
+        echo " Menu/branding replaced from upstream (--all). Existing img/ kept."
+elif [ "$KEEP_PAGES" -eq 1 ]; then
+        echo " Kept: include/config.php, buttons.html, existing img/"
         echo " Existing pages/CSS/footer were not overwritten (--keep-pages)."
         echo " To apply a full dashboard tidy-up:"
         echo "   hblink-dashboard-upgrade"
 else
+        echo " Kept: include/config.php, buttons.html, existing img/"
         echo " Pages, CSS, footer, and JS were refreshed from HBMonv2."
-        if [ -f "$BACKUP" ]; then
-                echo " HTML backup: ${BACKUP}"
-        fi
+        echo " Stock menu/branding: hblink-dashboard-upgrade --all"
+fi
+if [ "$KEEP_PAGES" -eq 0 ] && [ -f "$BACKUP" ]; then
+        echo " HTML backup: ${BACKUP}"
 fi
 echo "*************************************************************************"
 exit 0

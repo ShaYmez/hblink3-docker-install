@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hblink-upgrade` migrates an existing host HBMonv2 (systemd) install into Docker **without overwriting** `hblink.cfg` or `rules.py`
 - Dashboard endpoint `/json/talkgroup_ids.json` serving `/etc/hblink3/json/talkgroup_ids.json` (shared HBlink + HBMon source of truth)
 - Docker json-file log cap (`10m` × 3) and weekly logrotate for `/var/log/hblink` and `/var/log/hbmon`
-- `hblink-dashboard-upgrade` refreshes dashboard HTML from HBMonv2 (pages, CSS, footer, JS) without overwriting menu (`buttons.html`) or branding (`include/config.php`, existing `img/`). One HTML backup at `/root/hblink-dashboard-pre-upgrade.tar.gz`
+- `hblink-dashboard-upgrade` refreshes dashboard HTML from HBMonv2 (pages, CSS, footer, JS) without overwriting menu (`buttons.html`) or branding (`include/config.php`, existing `img/`). One HTML backup at `/root/hblink-dashboard-pre-upgrade.tar.gz`. `--all` also replaces menu/branding from upstream (logos still kept).
 - Menu option **Talkgroup Manager User** (`hblink-tgmanager-user`) creates, updates, or deletes a hashed login in `/etc/hblink3/tgmanager.users` (group `www-data` so Apache can read it)
 
 ### Changed

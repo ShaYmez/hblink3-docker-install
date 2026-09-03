@@ -208,6 +208,12 @@ That command:
 
 Theme colour stays in `include/config.php`; `css/styles.php` is upstream and is refreshed. Sysops who edited pages or CSS by hand can restore from the tarball.
 
+To also take stock menu and PHP branding (`buttons.html`, `include/config.php`; logos under `img/` still kept):
+
+```sh
+hblink-dashboard-upgrade --all
+```
+
 Additive only (new files + Talkgroup Manager, leave existing pages):
 
 ```sh
