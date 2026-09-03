@@ -2,23 +2,263 @@
 
 # HBLINK3 DOCKER CONTROL SCRIPTS V2.0
 # Version 1.5.1 (14122024)
-# This script written by Shane Daley M0VUB. The script gracefully shuts down services while services are cleaned and logs are truncated.
-# We can also add items in this script for future use like updates or further log trims.
-# Add to the cron tab for auto execution
+# In-place upgrade: move host HBMonv2 (systemd) into Docker compose.
+# Preserves /etc/hblink3/hblink.cfg and /etc/hblink3/rules.py.
 
-#   Copyright (C) 2020-2025 Shane P. Daley  M0VUB <shane@freestar.network>
+#   Copyright (C) 2020-2026 Shane P. Daley  M0VUB <shane@freestar.network>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation; either version 3 of the License, or
 #   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
 
-# Upgrade script will be added later!
+if [ "$EUID" -ne 0 ]; then
+  echo ""
+  echo "You Must be root to run this script!!"
+  exit 1
+fi
 
-echo "Nothing to upgrade"
+HBDIR=/etc/hblink3
+HBMONDIR=/opt/HBMonv2
+INSTALLER_PATH=$(cat "${HBDIR}/.installer_path" 2>/dev/null || echo "/opt/hblink3-docker-install")
+STAMP=$(date +%Y%m%d-%H%M%S)
+BACKUP="/root/hblink3-pre-upgrade-${STAMP}.tar.gz"
+RADIO_UID=54000
+
+clear
+echo "*************************************************************************"
+echo "        HBlink3 Upgrade — move HBMonv2 dashboard into Docker             "
+echo "*************************************************************************"
+echo ""
+echo "This does NOT overwrite hblink.cfg or rules.py."
+echo "Installer path: ${INSTALLER_PATH}"
+echo ""
+
+if [ ! -f "${HBDIR}/hblink.cfg" ]; then
+        echo "ERROR: ${HBDIR}/hblink.cfg not found. This does not look like an HBlink3 install."
+        exit 1
+fi
+
+if [ ! -d "$INSTALLER_PATH" ]; then
+        echo "ERROR: Installer directory not found at ${INSTALLER_PATH}"
+        echo "Clone https://github.com/ShaYmez/hblink3-docker-install and re-run from that tree:"
+        echo "  git clone https://github.com/ShaYmez/hblink3-docker-install ${INSTALLER_PATH}"
+        echo "  bash ${INSTALLER_PATH}/usr/local/sbin/upgrade"
+        exit 1
+fi
+
+# Prefer the copy in the installer tree (after git pull) over a stale /usr/local/sbin script
+SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+REPO_UPGRADE="${INSTALLER_PATH}/usr/local/sbin/upgrade"
+if [ -f "$REPO_UPGRADE" ]; then
+        REPO_UPGRADE_ABS="$(readlink -f "$REPO_UPGRADE" 2>/dev/null || echo "$REPO_UPGRADE")"
+        if [ "$SELF" != "$REPO_UPGRADE_ABS" ]; then
+                echo "Re-running upgrade from installer tree..."
+                exec bash "$REPO_UPGRADE_ABS"
+        fi
+fi
+
+if [ -d "${INSTALLER_PATH}/.git" ]; then
+        echo "Updating installer from git..."
+        BEFORE_SUM=$(md5sum "$REPO_UPGRADE" 2>/dev/null | awk '{print $1}')
+        git -C "$INSTALLER_PATH" pull --ff-only || echo "WARNING: git pull failed — continuing with local installer files."
+        AFTER_SUM=$(md5sum "$REPO_UPGRADE" 2>/dev/null | awk '{print $1}')
+        if [ -n "$BEFORE_SUM" ] && [ -n "$AFTER_SUM" ] && [ "$BEFORE_SUM" != "$AFTER_SUM" ]; then
+                echo "Installer upgrade script was updated — re-running..."
+                exec bash "$REPO_UPGRADE"
+        fi
+fi
+
+if [ ! -f "${INSTALLER_PATH}/docker-compose.yml" ]; then
+        echo "ERROR: ${INSTALLER_PATH}/docker-compose.yml is missing."
+        echo "git pull the installer repo, then run: bash ${INSTALLER_PATH}/usr/local/sbin/upgrade"
+        exit 1
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+        echo "ERROR: docker is not installed."
+        exit 1
+fi
+if ! docker compose version >/dev/null 2>&1; then
+        echo "ERROR: Docker Compose v2 ('docker compose') is required."
+        exit 1
+fi
+
+echo "Backing up current config to ${BACKUP}..."
+BACKUP_PATHS="${HBDIR}"
+[ -f "${HBMONDIR}/config.py" ] && BACKUP_PATHS="${BACKUP_PATHS} ${HBMONDIR}/config.py"
+[ -d "${HBMONDIR}/log" ] && BACKUP_PATHS="${BACKUP_PATHS} ${HBMONDIR}/log"
+[ -f /lib/systemd/system/hbmon.service ] && BACKUP_PATHS="${BACKUP_PATHS} /lib/systemd/system/hbmon.service"
+[ -f /var/www/html/include/config.php ] && BACKUP_PATHS="${BACKUP_PATHS} /var/www/html/include/config.php"
+# shellcheck disable=SC2086
+tar czf "$BACKUP" $BACKUP_PATHS 2>/dev/null || tar czf "$BACKUP" "$HBDIR"
+echo "Backup: ${BACKUP}"
+echo ""
+
+# Preserve Parrot flag from existing compose
+OLD_PARROT=""
+if [ -f "${HBDIR}/docker-compose.yml" ]; then
+        OLD_PARROT=$(grep -E "PARROT_ENABLE=" "${HBDIR}/docker-compose.yml" | tail -1 | grep -oE '[01]' || true)
+fi
+
+echo "Stopping Docker stack (if running)..."
+if [ -f "${HBDIR}/docker-compose.yml" ]; then
+        (cd "$HBDIR" && docker compose down --remove-orphans) 2>/dev/null || true
+fi
+
+echo "Stopping leftover host HBMon (systemd) if present..."
+if systemctl is-active --quiet hbmon 2>/dev/null; then
+        systemctl disable --now hbmon || true
+fi
+if systemctl is-enabled --quiet hbmon 2>/dev/null; then
+        systemctl disable hbmon || true
+fi
+rm -f /lib/systemd/system/hbmon.service /etc/systemd/system/hbmon.service
+systemctl daemon-reload 2>/dev/null || true
+echo "Done."
+
+echo "Refreshing control scripts..."
+if [ -d "${INSTALLER_PATH}/usr/local/sbin" ]; then
+        find "${INSTALLER_PATH}/usr/local/sbin" -type f -exec sed -i 's/\r$//' {} \; 2>/dev/null || true
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/menu" /usr/local/sbin/hblink-menu
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/flush" /usr/local/sbin/hblink-flush
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/update" /usr/local/sbin/hblink-update
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/upgrade" /usr/local/sbin/hblink-upgrade
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/stop" /usr/local/sbin/hblink-stop
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/start" /usr/local/sbin/hblink-start
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/restart" /usr/local/sbin/hblink-restart
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/initial-setup" /usr/local/sbin/hblink-initial-setup
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/uninstall" /usr/local/sbin/hblink-uninstall
+        chmod 755 /usr/local/sbin/hblink-*
+fi
+echo "$INSTALLER_PATH" > "${HBDIR}/.installer_path"
+chmod 644 "${HBDIR}/.installer_path"
+
+echo "Installing docker-compose.yml (hblink + hbmon)..."
+sed -i 's/\r$//' "${INSTALLER_PATH}/docker-compose.yml" 2>/dev/null || true
+cp -f "${INSTALLER_PATH}/docker-compose.yml" "${HBDIR}/docker-compose.yml"
+if [ "$OLD_PARROT" = "0" ]; then
+        sed -i "s/PARROT_ENABLE=1/PARROT_ENABLE=0/" "${HBDIR}/docker-compose.yml"
+        echo "Preserved PARROT_ENABLE=0 from previous compose."
+fi
+
+echo "Preparing HBMonv2 Docker config..."
+mkdir -p "${HBDIR}/json/templates" /var/log/hbmon /var/log/hblink
+touch "${HBDIR}/json/templates/lastheard.html"
+touch /var/log/hbmon/hbmon.log /var/log/hbmon/lastheard.log
+touch /var/log/hblink/hblink.log
+
+if [ ! -f "${HBDIR}/config.py" ] && [ -f "${HBMONDIR}/config.py" ]; then
+        echo "Migrating ${HBMONDIR}/config.py -> ${HBDIR}/config.py"
+        cp -a "${HBMONDIR}/config.py" "${HBDIR}/config.py"
+fi
+
+if [ ! -f "${HBDIR}/config.py" ]; then
+        echo "Writing default Docker dashboard config..."
+        cat << 'EOF' > "${HBDIR}/config.py"
+###############################################################################
+#                    HBMonv2 Configuration File (Docker)
+###############################################################################
+CONFIG_INC      = True
+HOMEBREW_INC    = True
+LASTHEARD_INC   = True
+BRIDGES_INC     = False
+EMPTY_MASTERS   = False
+HBLINK_IP       = '172.16.238.10'
+HBLINK_PORT     = 4321
+FREQUENCY       = 10
+CLIENT_TIMEOUT  = 0
+OPB_FILTER      = ""
+PATH            = './data/'
+PEER_FILE       = 'peer_ids.json'
+SUBSCRIBER_FILE = 'subscriber_ids.json'
+TGID_FILE       = 'talkgroup_ids.json'
+LOCAL_SUB_FILE  = 'local_subscriber_ids.json'
+LOCAL_PEER_FILE = 'local_peer_ids.json'
+LOCAL_TGID_FILE = 'local_talkgroup_ids.json'
+FILE_RELOAD     = 14
+PEER_URL        = 'https://radioid.net/static/rptrs.json'
+SUBSCRIBER_URL  = 'https://radioid.net/static/users.json'
+LOG_PATH        = './log/'
+LOG_NAME        = 'hbmon.log'
+EOF
+fi
+
+# Docker network: monitor must reach the HBlink container, not localhost
+sed -i "s/^HBLINK_IP.*/HBLINK_IP       = '172.16.238.10'/" "${HBDIR}/config.py"
+# Alias files are bind-mounted at /hbmon/data
+sed -i "s|^PATH[[:space:]]*=[[:space:]]*'\./'|PATH            = './data/'|" "${HBDIR}/config.py"
+
+if [ -f "${HBMONDIR}/log/lastheard.log" ] && [ ! -s /var/log/hbmon/lastheard.log ]; then
+        echo "Migrating lastheard.log..."
+        cp -a "${HBMONDIR}/log/lastheard.log" /var/log/hbmon/lastheard.log
+fi
+
+if [ -d "${HBMONDIR}/data" ]; then
+        cp -n "${HBMONDIR}/data/local_subscriber_ids.json" "${HBDIR}/json/" 2>/dev/null || true
+        cp -n "${HBMONDIR}/data/local_peer_ids.json" "${HBDIR}/json/" 2>/dev/null || true
+        cp -n "${HBMONDIR}/data/local_talkgroup_ids.json" "${HBDIR}/json/" 2>/dev/null || true
+fi
+
+echo "Updating lastheard cron and dashboard log path..."
+cat << 'EOF' > /etc/cron.daily/lastheard
+#!/bin/bash
+if [ -f /var/log/hbmon/lastheard.log ]; then
+        mv /var/log/hbmon/lastheard.log /var/log/hbmon/lastheard.log.save
+        /usr/bin/tail -150 /var/log/hbmon/lastheard.log.save > /var/log/hbmon/lastheard.log
+        chown 54000:54000 /var/log/hbmon/lastheard.log 2>/dev/null || true
+        chmod 644 /var/log/hbmon/lastheard.log 2>/dev/null || true
+fi
+EOF
+chmod 755 /etc/cron.daily/lastheard
+
+if [ -f /var/www/html/log.php ]; then
+        sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' /var/www/html/log.php
+fi
+
+if [ -d "${HBMONDIR}/html" ]; then
+        echo "Refreshing dashboard HTML (preserving include/config.php)..."
+        if [ -f /var/www/html/include/config.php ]; then
+                cp -a /var/www/html/include/config.php "/tmp/hbmon-php-config-${STAMP}.php"
+        fi
+        cp -a "${HBMONDIR}/html/." /var/www/html/
+        if [ -f "/tmp/hbmon-php-config-${STAMP}.php" ]; then
+                mkdir -p /var/www/html/include
+                mv "/tmp/hbmon-php-config-${STAMP}.php" /var/www/html/include/config.php
+        fi
+        sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' /var/www/html/log.php 2>/dev/null || true
+fi
+
+if [ -d "${HBMONDIR}/venv" ]; then
+        echo "Removing host HBMon Python venv..."
+        rm -rf "${HBMONDIR}/venv"
+fi
+
+echo "Setting permissions..."
+chmod 755 "$HBDIR" /var/log/hbmon /var/log/hblink
+chmod 644 "${HBDIR}/config.py" "${HBDIR}/docker-compose.yml"
+chown -R "${RADIO_UID}" "$HBDIR" /var/log/hblink /var/log/hbmon 2>/dev/null || true
+# Keep operator configs readable/writable
+chmod 644 "${HBDIR}/hblink.cfg" "${HBDIR}/rules.py" "${HBDIR}/config.py" 2>/dev/null || true
+
+echo "Pulling images and starting HBlink3 + HBMonv2..."
+cd "$HBDIR"
+docker compose pull
+docker compose up -d
+sleep 5
+docker ps
+echo ""
+echo "---- hblink ----"
+docker container logs hblink 2>/dev/null | tail -20
+echo "---- hbmon ----"
+docker container logs hbmon 2>/dev/null | tail -20
+echo ""
+figlet "HBMonv2" 2>/dev/null || true
+
+echo "*************************************************************************"
+echo " Upgrade complete. hblink.cfg and rules.py were not modified."
+echo " Dashboard config: ${HBDIR}/config.py  (HBLINK_IP=172.16.238.10)"
+echo " Backup: ${BACKUP}"
+echo " Host hbmon.service removed. Stack: docker compose in ${HBDIR}"
+echo "*************************************************************************"
 exit 0

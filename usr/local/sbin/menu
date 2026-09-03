@@ -29,7 +29,7 @@ menuopt=$(whiptail --title "HBlink3 Control Version 2.0" --menu "Select option b
 6 " Edit HBlink Config " \
 7 " Edit HBlink Rules " \
 8 " Edit Dashboard Config " \
-9 " Full Upgrade OBPMaster " \
+9 " Upgrade HBMon to Docker " \
 10 " System Update / apt update " \
 11 " Uninstall HBlink3 " \
 12 " Reboot Entire Server " \

@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **HBMonv2 runs in Docker** on the same compose network as HBlink3 (same pattern as XPeer / RYMonv3)
 - `docker-compose.yml` is now shipped in this repository (copied from local hblink3 and extended with `hbmon`)
 - Dedicated HBMonv2 log directory at `/var/log/hbmon`
-- Dashboard config at `/etc/hblink3/config.py` with `HBLINK_IP = 172.16.238.10` (HBlink container address)
+- `hblink-upgrade` migrates an existing host HBMonv2 (systemd) install into Docker **without overwriting** `hblink.cfg` or `rules.py`
 
 ### Changed
 - Installer no longer clones hblink3 only to obtain compose — it copies `docker-compose.yml` from the installer tree

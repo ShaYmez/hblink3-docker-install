@@ -158,11 +158,29 @@ HBlink3 and HBMonv2 run as sibling containers on `app_net` (`172.16.238.0/24`):
 This matches the XPeer installer layout (RYSEN + RYMonv3) and avoids host Python / systemd for the monitor.
 
 ## Easy Installation And Upgrade
-The installation can be upgraded either by the use of a future scripts or by manually backing up your configuration and re-running the install script. Also the ability and really cool feature of docker-compose is that its easy to update the container with fresh images! Run by a simple command. Make sure you are in the /etc/hblink3 dir.
+Existing servers that still run HBMonv2 via systemd should **not** use a full reinstall (that overwrites `hblink.cfg` / `rules.py`). Use the upgrade script:
+
 ```sh
-docker-compose pull
+cd /opt/hblink3-docker-install    # or the path in /etc/hblink3/.installer_path
+git pull
+hblink-upgrade
 ```
-or 
+
+If `hblink-upgrade` is still the old stub (`Nothing to upgrade`), run the copy from the repo after `git pull`:
+
+```sh
+bash usr/local/sbin/upgrade
+```
+
+That move:
+- Keeps `hblink.cfg` and `rules.py`
+- Stops and removes `hbmon.service`
+- Installs compose with `hblink` + `hbmon` (`shaymez/hbmonv2:latest`)
+- Migrates `/opt/HBMonv2/config.py` to `/etc/hblink3/config.py` and sets `HBLINK_IP = 172.16.238.10`
+- Backs up first to `/root/hblink3-pre-upgrade-[timestamp].tar.gz`
+
+To refresh Docker images only (already on the compose stack):
+
 ```sh
 hblink-update
 ```

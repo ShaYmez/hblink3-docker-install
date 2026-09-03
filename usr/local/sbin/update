@@ -35,6 +35,23 @@ sleep 1
 echo "..."
 echo Stopping HBlink3 + HBMonv2.....
 cd /etc/hblink3
+if [ -f docker-compose.yml ] && ! grep -q 'container_name: hbmon' docker-compose.yml; then
+        echo ""
+        echo "This server still has the old host HBMon (no hbmon service in compose)."
+        echo "Images-only update will not migrate the dashboard."
+        echo "Run:  hblink-upgrade"
+        echo "  or: bash \$(cat /etc/hblink3/.installer_path)/usr/local/sbin/upgrade"
+        echo ""
+        if [ ! -t 0 ]; then
+                echo "Non-interactive session: refusing image-only update. Run hblink-upgrade first."
+                exit 1
+        fi
+        read -p "Continue with docker image update anyway? (yes/no): " confirm
+        if [ "$confirm" != "yes" ]; then
+                echo "Update cancelled. Run hblink-upgrade to move HBMon into Docker."
+                exit 0
+        fi
+fi
 docker compose down --remove-orphans
 echo Pulling latest Docker images.....
 docker compose pull
