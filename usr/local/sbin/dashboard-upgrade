@@ -1,0 +1,234 @@
+#!/bin/bash
+
+# HBLINK3 DOCKER CONTROL SCRIPTS V2.0
+# Version 1.5.1 (14122024)
+# Refresh dashboard HTML from /opt/HBMonv2.
+# Sysop-owned: include/config.php, buttons.html, existing img/.
+# Everything else (pages, CSS, footer, JS) is upstream.
+
+#   Copyright (C) 2020-2026 Shane P. Daley  M0VUB <shane@freestar.network>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+
+usage() {
+        cat << 'EOF'
+Usage: hblink-dashboard-upgrade [--keep-pages]
+
+Refresh /var/www/html from /opt/HBMonv2 (git pull first).
+
+Default:
+  - Back up /var/www/html to /root/hblink-dashboard-pre-upgrade.tar.gz
+    (replaces previous copy; one .old kept)
+  - Copy upstream HTML (pages, css/styles.php, footer, JS, Talkgroup Manager)
+  - Never overwrite:
+      include/config.php  buttons.html  buttons.php  existing files under img/
+
+  --keep-pages
+      Additive only: new files plus Talkgroup Manager PHP. Existing pages,
+      CSS, and footer are left alone. Used by hblink-upgrade so a compose
+      migrate does not rewrite a live dashboard.
+
+  --update-pages
+      Accepted for compatibility; same as default.
+EOF
+}
+
+if [ "$EUID" -ne 0 ]; then
+        echo ""
+        echo "You Must be root to run this script!!"
+        exit 1
+fi
+
+KEEP_PAGES=0
+for arg in "$@"; do
+        case "$arg" in
+                --keep-pages) KEEP_PAGES=1 ;;
+                --update-pages) KEEP_PAGES=0 ;;
+                -h|--help) usage; exit 0 ;;
+                *)
+                        echo "Unknown option: $arg"
+                        usage
+                        exit 1
+                        ;;
+        esac
+done
+
+HBDIR=/etc/hblink3
+HBMONDIR=/opt/HBMonv2
+HBMON_GIT=https://github.com/ShaYmez/HBMonv2.git
+INSTALLER_PATH=$(cat "${HBDIR}/.installer_path" 2>/dev/null || echo "/opt/hblink3-docker-install")
+SRC="${HBMONDIR}/html"
+DST=/var/www/html
+NESTED="${HBLINK_DASHBOARD_UPGRADE_NESTED:-0}"
+BACKUP="/root/hblink-dashboard-pre-upgrade.tar.gz"
+BACKUP_OLD="/root/hblink-dashboard-pre-upgrade.tar.gz.old"
+
+is_preserved() {
+        case "$1" in
+                include/config.php|buttons.html|buttons.php)
+                        return 0
+                        ;;
+        esac
+        return 1
+}
+
+is_manager() {
+        case "$1" in
+                tgmanager.php|json.php|include/tgid_store.php|include/tgmanager_auth.php)
+                        return 0
+                        ;;
+        esac
+        return 1
+}
+
+is_img() {
+        case "$1" in
+                img/*) return 0 ;;
+        esac
+        return 1
+}
+
+if [ "$NESTED" != "1" ]; then
+        SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+        REPO_SCRIPT="${INSTALLER_PATH}/usr/local/sbin/dashboard-upgrade"
+        if [ -f "$REPO_SCRIPT" ]; then
+                REPO_ABS="$(readlink -f "$REPO_SCRIPT" 2>/dev/null || echo "$REPO_SCRIPT")"
+                if [ "$SELF" != "$REPO_ABS" ]; then
+                        echo "Re-running dashboard upgrade from installer tree..."
+                        exec bash "$REPO_ABS" "$@"
+                fi
+        fi
+
+        if [ -d "${INSTALLER_PATH}/.git" ]; then
+                echo "Updating installer from git..."
+                BEFORE_SUM=$(md5sum "$REPO_SCRIPT" 2>/dev/null | awk '{print $1}')
+                git -C "$INSTALLER_PATH" pull --ff-only || echo "WARNING: installer git pull failed — continuing with local files."
+                AFTER_SUM=$(md5sum "$REPO_SCRIPT" 2>/dev/null | awk '{print $1}')
+                if [ -n "$BEFORE_SUM" ] && [ -n "$AFTER_SUM" ] && [ "$BEFORE_SUM" != "$AFTER_SUM" ]; then
+                        echo "Dashboard upgrade script was updated — re-running..."
+                        exec bash "$REPO_SCRIPT" "$@"
+                fi
+        fi
+fi
+
+echo "*************************************************************************"
+echo "        HBlink3 Dashboard HTML upgrade (preserves menu / branding)       "
+echo "*************************************************************************"
+echo ""
+
+if [ -d "${HBMONDIR}/.git" ]; then
+        echo "Updating ${HBMONDIR} from git..."
+        git -C "$HBMONDIR" pull --ff-only || echo "WARNING: HBMonv2 git pull failed — continuing with local html."
+elif [ ! -d "$SRC" ]; then
+        echo "Cloning HBMonv2 into ${HBMONDIR}..."
+        git clone "$HBMON_GIT" "$HBMONDIR" || {
+                echo "ERROR: could not clone ${HBMON_GIT}"
+                exit 1
+        }
+fi
+
+if [ ! -d "$SRC" ]; then
+        echo "ERROR: ${SRC} not found."
+        exit 1
+fi
+
+mkdir -p "$DST"
+
+rm -f /root/hblink-dashboard-pre-upgrade-[0-9]*.tar.gz
+if [ "$KEEP_PAGES" -eq 0 ] && [ -d "$DST" ]; then
+        echo "Backing up ${DST} to ${BACKUP} (replaces previous copy)..."
+        [ -f "$BACKUP" ] && mv -f "$BACKUP" "$BACKUP_OLD"
+        tar czf "$BACKUP" -C /var/www html 2>/dev/null || true
+        if [ -f "$BACKUP" ]; then
+                echo "Backup: ${BACKUP}"
+        else
+                echo "WARNING: could not write ${BACKUP}"
+        fi
+        echo ""
+fi
+
+ADDED=0
+UPDATED=0
+PRESERVED=0
+SKIPPED=0
+
+while IFS= read -r -d '' f; do
+        rel="${f#"$SRC"/}"
+        dest="${DST}/${rel}"
+
+        if is_preserved "$rel" && [ -f "$dest" ]; then
+                echo "Preserved  $rel"
+                PRESERVED=$((PRESERVED + 1))
+                continue
+        fi
+
+        if is_img "$rel" && [ -f "$dest" ]; then
+                echo "Preserved  $rel"
+                PRESERVED=$((PRESERVED + 1))
+                continue
+        fi
+
+        if [ "$KEEP_PAGES" -eq 1 ]; then
+                if is_manager "$rel"; then
+                        mkdir -p "$(dirname "$dest")"
+                        cp -a "$f" "$dest"
+                        echo "Updated    $rel  (manager)"
+                        UPDATED=$((UPDATED + 1))
+                        continue
+                fi
+                if [ ! -f "$dest" ]; then
+                        mkdir -p "$(dirname "$dest")"
+                        cp -a "$f" "$dest"
+                        echo "Added      $rel"
+                        ADDED=$((ADDED + 1))
+                        continue
+                fi
+                echo "Skipped    $rel  (already present)"
+                SKIPPED=$((SKIPPED + 1))
+                continue
+        fi
+
+        mkdir -p "$(dirname "$dest")"
+        if [ -f "$dest" ]; then
+                cp -a "$f" "$dest"
+                echo "Updated    $rel"
+                UPDATED=$((UPDATED + 1))
+        else
+                cp -a "$f" "$dest"
+                echo "Added      $rel"
+                ADDED=$((ADDED + 1))
+        fi
+done < <(find "$SRC" -type f -print0)
+
+if [ -f "${DST}/log.php" ]; then
+        sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' "${DST}/log.php"
+fi
+
+if [ -f "${INSTALLER_PATH}/files/install-json-endpoint.sh" ]; then
+        bash "${INSTALLER_PATH}/files/install-json-endpoint.sh" "${INSTALLER_PATH}/files/apache-hblink-json.conf"
+fi
+
+if [ -f "${HBMONDIR}/utils/tgmanager-perms.sh" ] && [ -f "${HBDIR}/json/talkgroup_ids.json" ]; then
+        bash "${HBMONDIR}/utils/tgmanager-perms.sh" "${HBDIR}/json/talkgroup_ids.json" || true
+fi
+
+echo ""
+echo "*************************************************************************"
+echo " Dashboard HTML upgrade complete."
+echo " Added ${ADDED}  updated ${UPDATED}  preserved ${PRESERVED}  skipped ${SKIPPED}"
+echo " Kept: include/config.php, buttons.html, existing img/"
+if [ "$KEEP_PAGES" -eq 1 ]; then
+        echo " Existing pages/CSS/footer were not overwritten (--keep-pages)."
+        echo " To apply a full dashboard tidy-up:"
+        echo "   hblink-dashboard-upgrade"
+else
+        echo " Pages, CSS, footer, and JS were refreshed from HBMonv2."
+        if [ -f "$BACKUP" ]; then
+                echo " HTML backup: ${BACKUP}"
+        fi
+fi
+echo "*************************************************************************"
+exit 0

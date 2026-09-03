@@ -143,6 +143,7 @@ if [ -d "${INSTALLER_PATH}/usr/local/sbin" ]; then
         cp -p "${INSTALLER_PATH}/usr/local/sbin/flush" /usr/local/sbin/hblink-flush
         cp -p "${INSTALLER_PATH}/usr/local/sbin/update" /usr/local/sbin/hblink-update
         cp -p "${INSTALLER_PATH}/usr/local/sbin/upgrade" /usr/local/sbin/hblink-upgrade
+        cp -p "${INSTALLER_PATH}/usr/local/sbin/dashboard-upgrade" /usr/local/sbin/hblink-dashboard-upgrade
         cp -p "${INSTALLER_PATH}/usr/local/sbin/stop" /usr/local/sbin/hblink-stop
         cp -p "${INSTALLER_PATH}/usr/local/sbin/start" /usr/local/sbin/hblink-start
         cp -p "${INSTALLER_PATH}/usr/local/sbin/restart" /usr/local/sbin/hblink-restart
@@ -232,6 +233,10 @@ fi
 EOF
 chmod 755 /etc/cron.daily/lastheard
 
+if [ -f "${INSTALLER_PATH}/files/install-json-endpoint.sh" ]; then
+        bash "${INSTALLER_PATH}/files/install-json-endpoint.sh" "${INSTALLER_PATH}/files/apache-hblink-json.conf"
+fi
+
 if [ -f "${INSTALLER_PATH}/files/hblink-logrotate" ]; then
         cp -f "${INSTALLER_PATH}/files/hblink-logrotate" /etc/logrotate.d/hblink
         chmod 644 /etc/logrotate.d/hblink
@@ -248,17 +253,10 @@ if [ -f /var/www/html/log.php ]; then
         sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' /var/www/html/log.php
 fi
 
-if [ "$LEGACY" -eq 1 ] && [ -d "${HBMONDIR}/html" ]; then
-        echo "Refreshing dashboard HTML (preserving include/config.php)..."
-        if [ -f /var/www/html/include/config.php ]; then
-                cp -a /var/www/html/include/config.php "/tmp/hbmon-php-config.$$.php"
-        fi
-        cp -a "${HBMONDIR}/html/." /var/www/html/
-        if [ -f "/tmp/hbmon-php-config.$$.php" ]; then
-                mkdir -p /var/www/html/include
-                mv "/tmp/hbmon-php-config.$$.php" /var/www/html/include/config.php
-        fi
-        sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' /var/www/html/log.php 2>/dev/null || true
+# Additive HTML only — do not rewrite a live dashboard during compose migrate
+if [ -f "${INSTALLER_PATH}/usr/local/sbin/dashboard-upgrade" ]; then
+        echo "Adding new dashboard files (pages/CSS/branding left in place)..."
+        HBLINK_DASHBOARD_UPGRADE_NESTED=1 bash "${INSTALLER_PATH}/usr/local/sbin/dashboard-upgrade" --keep-pages
 fi
 
 if [ -d "${HBMONDIR}/venv" ]; then
@@ -297,5 +295,7 @@ else
         echo " No new backup written (already on Docker HBMon)."
 fi
 echo " Host hbmon.service removed. Stack: docker compose in ${HBDIR}"
+echo " Dashboard HTML: new files only. To apply upstream pages/CSS:"
+echo "   hblink-dashboard-upgrade"
 echo "*************************************************************************"
 exit 0

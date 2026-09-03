@@ -136,6 +136,7 @@ rm -f /usr/local/sbin/hblink-menu
 rm -f /usr/local/sbin/hblink-flush
 rm -f /usr/local/sbin/hblink-update
 rm -f /usr/local/sbin/hblink-upgrade
+rm -f /usr/local/sbin/hblink-dashboard-upgrade
 rm -f /usr/local/sbin/hblink-stop
 rm -f /usr/local/sbin/hblink-start
 rm -f /usr/local/sbin/hblink-restart
@@ -222,7 +223,12 @@ echo "--------------------------------------------------------------------------
 echo "Final cleanup..."
 echo "------------------------------------------------------------------------------"
 
-# Restart Apache to apply changes
+if [ -f /etc/apache2/conf-available/hblink-json.conf ]; then
+    echo "Removing talkgroup JSON Apache endpoint..."
+    a2disconf hblink-json >/dev/null 2>&1 || true
+    rm -f /etc/apache2/conf-available/hblink-json.conf /etc/apache2/conf-enabled/hblink-json.conf
+fi
+
 if systemctl is-active --quiet apache2; then
     echo "Restarting Apache2..."
     systemctl restart apache2

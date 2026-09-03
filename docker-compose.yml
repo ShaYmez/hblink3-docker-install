@@ -10,6 +10,7 @@ services:
       - '/etc/hblink3/hblink.cfg:/hblink3/hblink.cfg'
       - '/var/log/hblink/hblink.log:/hblink3/hblink.log'
       - '/etc/hblink3/rules.py:/hblink3/rules.py'
+      # Canonical alias JSON (talkgroup_ids.json is the single source of truth)
       - '/etc/hblink3/json/:/hblink3/json/'
     ports:
       # Master Ports (99 Masters)
@@ -37,6 +38,7 @@ services:
     volumes:
       - '/etc/hblink3/config.py:/hbmon/config.py:ro'
       - '/var/log/hbmon:/hbmon/log'
+      # Same host dir as HBlink ./json — HBMon manager should write talkgroup_ids.json here
       - '/etc/hblink3/json:/hbmon/data'
       - '/etc/hblink3/json/templates/lastheard.html:/hbmon/templates/lastheard.html'
     networks:

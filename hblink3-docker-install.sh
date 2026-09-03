@@ -277,6 +277,7 @@ echo "--------------------------------------------------------------------------
         cp -p flush /usr/local/sbin/hblink-flush
         cp -p update /usr/local/sbin/hblink-update
         cp -p upgrade /usr/local/sbin/hblink-upgrade
+        cp -p dashboard-upgrade /usr/local/sbin/hblink-dashboard-upgrade
         cp -p stop /usr/local/sbin/hblink-stop
         cp -p start /usr/local/sbin/hblink-start
         cp -p restart /usr/local/sbin/hblink-restart
@@ -298,6 +299,7 @@ fi
         chmod 755 /usr/local/sbin/hblink-flush
         chmod 755 /usr/local/sbin/hblink-update
         chmod 755 /usr/local/sbin/hblink-upgrade
+        chmod 755 /usr/local/sbin/hblink-dashboard-upgrade
         chmod 755 /usr/local/sbin/hblink-stop
         chmod 755 /usr/local/sbin/hblink-start
         chmod 755 /usr/local/sbin/hblink-restart
@@ -360,6 +362,12 @@ then
 fi
 echo "Done."
 
+echo "------------------------------------------------------------------------------"
+echo "Publishing talkgroup_ids.json on the dashboard....."
+echo "------------------------------------------------------------------------------"
+        bash "$DIRDIR/files/install-json-endpoint.sh" "$DIRDIR/files/apache-hblink-json.conf"
+echo "Done."
+
 echo "Install crontab..."
 cat << EOF > /etc/cron.daily/lastheard
 #!/bin/bash
@@ -405,6 +413,9 @@ sleep 2
                 cp -n /opt/HBMonv2/data/local_subscriber_ids.json /etc/hblink3/json/ 2>/dev/null || true
                 cp -n /opt/HBMonv2/data/local_peer_ids.json /etc/hblink3/json/ 2>/dev/null || true
                 cp -n /opt/HBMonv2/data/local_talkgroup_ids.json /etc/hblink3/json/ 2>/dev/null || true
+         fi
+         if [ -f /opt/HBMonv2/utils/tgmanager-perms.sh ] && [ -f /etc/hblink3/json/talkgroup_ids.json ]; then
+                bash /opt/HBMonv2/utils/tgmanager-perms.sh /etc/hblink3/json/talkgroup_ids.json || true
          fi
 
          echo Make HBMonv2 log directory...

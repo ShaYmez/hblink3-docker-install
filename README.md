@@ -152,7 +152,9 @@ HBlink3 and HBMonv2 run as sibling containers on `app_net` (`172.16.238.0/24`):
 - **hblink** (`shaymez/hblink3:latest`) at `172.16.238.10` — reporting socket `4321`
 - **hbmon** (`shaymez/hbmonv2:latest`) at `172.16.238.12` — websocket `9000`
 - Dashboard config: `/etc/hblink3/config.py` (`HBLINK_IP` must be the HBlink container address, not `127.0.0.1`)
-- Alias JSON files are shared at `/etc/hblink3/json`
+- Alias JSON files are shared at `/etc/hblink3/json` (HBlink `./json/` and HBMon `./data/` are the same directory)
+- Talkgroup list source of truth: `/etc/hblink3/json/talkgroup_ids.json`
+- Dashboard endpoint for other apps: `http://<host>/json/talkgroup_ids.json` (an HBMon manager can update that one file)
 - Apache2 still serves the PHP dashboard from `/var/www/html`
 
 This matches the XPeer installer layout (RYSEN + RYMonv3) and avoids host Python / systemd for the monitor.
@@ -183,6 +185,30 @@ To refresh Docker images only (already on the compose stack):
 
 ```sh
 hblink-update
+```
+
+### Dashboard HTML (Talkgroup Manager, tidy-up, etc.)
+
+`hblink-update` only pulls Docker images. `hblink-upgrade` only adds **missing** dashboard files (`--keep-pages`) so a compose migrate does not rewrite a live site.
+
+To apply upstream dashboard HTML (pages, `css/styles.php`, footer, JS) after a tidy-up:
+
+```sh
+hblink-dashboard-upgrade
+```
+
+That command:
+
+- Backs up `/var/www/html` to `/root/hblink-dashboard-pre-upgrade.tar.gz` (replaces that file; one `.old` kept)
+- `git pull`s `/opt/HBMonv2` and copies upstream HTML
+- **Never overwrites** `include/config.php` (name / theme), `buttons.html` (menu), or existing files under `img/` (logos)
+
+Theme colour stays in `include/config.php`; `css/styles.php` is upstream and is refreshed. Sysops who edited pages or CSS by hand can restore from the tarball.
+
+Additive only (new files + Talkgroup Manager, leave existing pages):
+
+```sh
+hblink-dashboard-upgrade --keep-pages
 ```
 
 ## Ports to forward
