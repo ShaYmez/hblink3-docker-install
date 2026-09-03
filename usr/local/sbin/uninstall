@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # HBLINK3 DOCKER UNINSTALL SCRIPT V2.0
-# Version 13122025
+# Version 1.5.1 (14122024)
 # This script written by Shane Daley M0VUB. 
 # This script gracefully removes HBlink3 installation and all related components.
 
@@ -34,10 +34,9 @@ echo ""
 echo "*************************************************************************"
 echo ""
 echo "WARNING: This will remove ALL HBlink3 components including:"
-echo "  - HBlink3 Docker containers and images"
-echo "  - HBMonv2 Dashboard"
+echo "  - HBlink3 and HBMonv2 Docker containers and images"
 echo "  - Configuration files (/etc/hblink3)"
-echo "  - Log files (/var/log/hblink)"
+echo "  - Log files (/var/log/hblink, /var/log/hbmon)"
 echo "  - Control scripts (/usr/local/sbin/hblink-*)"
 echo "  - Systemd services"
 echo "  - Cron jobs"
@@ -63,18 +62,18 @@ echo "--------------------------------------------------------------------------
 if [ -d "/etc/hblink3" ]; then
     cd /etc/hblink3
     if [ -f "docker-compose.yml" ]; then
-        echo "Stopping HBlink3 Docker container..."
-        docker-compose down 2>/dev/null || true
+        echo "Stopping HBlink3 + HBMonv2 Docker stack..."
+        docker compose down --remove-orphans 2>/dev/null || docker-compose down --remove-orphans 2>/dev/null || true
     fi
 fi
 
-if systemctl is-active --quiet hbmon; then
-    echo "Stopping HBMonv2 service..."
+if systemctl is-active --quiet hbmon 2>/dev/null; then
+    echo "Stopping leftover host HBMonv2 service..."
     systemctl stop hbmon
 fi
 
 if systemctl is-enabled --quiet hbmon 2>/dev/null; then
-    echo "Disabling HBMonv2 service..."
+    echo "Disabling leftover host HBMonv2 service..."
     systemctl disable hbmon
 fi
 
@@ -85,16 +84,20 @@ echo "Removing HBlink3 Docker containers and images..."
 echo "------------------------------------------------------------------------------"
 
 if [ -x "$(command -v docker)" ]; then
-    # Remove hblink container if it exists
-    if docker ps -a | grep -q hblink; then
+    # Remove hblink / hbmon containers if they exist
+    if docker ps -a --format '{{.Names}}' | grep -qx hblink; then
         echo "Removing hblink container..."
         docker rm -f hblink 2>/dev/null || true
     fi
+    if docker ps -a --format '{{.Names}}' | grep -qx hbmon; then
+        echo "Removing hbmon container..."
+        docker rm -f hbmon 2>/dev/null || true
+    fi
     
-    # Remove hblink images
-    hblink_images=$(docker images | grep -i hblink | awk '{print $3}')
+    # Remove hblink / hbmon images
+    hblink_images=$(docker images | grep -iE 'hblink|hbmon' | awk '{print $3}')
     if [ ! -z "$hblink_images" ]; then
-        echo "Removing HBlink Docker images..."
+        echo "Removing HBlink / HBMon Docker images..."
         docker rmi -f $hblink_images 2>/dev/null || true
     fi
 fi
@@ -154,9 +157,10 @@ if [ -d "/etc/hblink3" ]; then
 fi
 
 if [ -d "/opt/HBMonv2" ]; then
-    echo "Backing up /opt/HBMonv2/config.py to $backup_dir..."
+    echo "Backing up /opt/HBMonv2 notes to $backup_dir..."
     mkdir -p "$backup_dir/HBMonv2"
-    cp /opt/HBMonv2/config.py "$backup_dir/HBMonv2/" 2>/dev/null || true
+    cp /etc/hblink3/config.py "$backup_dir/HBMonv2/" 2>/dev/null || true
+    cp /opt/HBMonv2/config.py "$backup_dir/HBMonv2/host-config.py" 2>/dev/null || true
 fi
 
 # Remove directories
@@ -178,6 +182,11 @@ fi
 if [ -d "/var/log/hblink" ]; then
     echo "Removing /var/log/hblink..."
     rm -rf /var/log/hblink
+fi
+
+if [ -d "/var/log/hbmon" ]; then
+    echo "Removing /var/log/hbmon..."
+    rm -rf /var/log/hbmon
 fi
 
 if [ -d "/opt/tmp" ]; then

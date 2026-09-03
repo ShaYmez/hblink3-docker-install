@@ -2,7 +2,7 @@
 # Docker version alpine-3.20
 # Version 1.5.1 (14122024) hblink3-docker-installer
 # Docker upstream repo version 2.0.2
-# Release: Stable Release - Python Virtual Environment Support
+# Release: Stable Release - HBMonv2 in Docker (same pattern as XPeer / RYMonv3)
 #
 ##################################################################################
 #   Copyright (C) 2021-2025 Shane Daley, M0VUB aka ShaYmez. <shane@freestar.network>
@@ -33,9 +33,19 @@
 # docker compose down (shuts down the hblink container and stops the service)
 # docker compose pull (updates the container to the latest docker image)
 # For backward compatibility, docker-compose (with hyphen) is also supported via a wrapper script
-# systemctl |stop|start|restart|status hbmon (controls the HBMonv2 dash service)
-# logs can be found in var/log/hblink or docker command "docker container logs hblink"
+# docker compose (controls HBlink3 + HBMonv2)
+# logs can be found in /var/log/hblink, /var/log/hbmon or docker command "docker container logs hblink|hbmon"
 #Lets begin-------------------------------------------------------------------------------------------------
+export DEBIAN_FRONTEND=noninteractive
+
+# Strip Windows CRLF from this tree (safe if already LF)
+strip_crlf() {
+        local f
+        while IFS= read -r -d '' f; do
+                sed -i 's/\r$//' "$f" 2>/dev/null || true
+        done < <(find "$1" -type f \( -name '*.sh' -o -name '*.yml' -o -path '*/usr/local/sbin/*' \) -print0 2>/dev/null)
+}
+
 if [ "$EUID" -ne 0 ];
 then
   echo ""
@@ -88,12 +98,9 @@ DIRDIR=$(pwd)
 LOCAL_IP=$(ip a | grep inet | grep "eth0\|en" | awk '{print $2}' | tr '/' ' ' | awk '{print $1}')
 EXTERNAL_IP=$(curl -s --connect-timeout 5 https://ipecho.net/plain 2>/dev/null || echo "Unable to detect")
 ARC=$(lscpu | grep Arch | awk '{print $2}')
-INSDIR=/opt/tmp/
-HBLINKTMP=/opt/tmp/hblink3
 HBMONDIR=/opt/HBMonv2/
 HBDIR=/etc/hblink3/
-DEP="wget curl git sudo python3 python3-dev python3-pip python3-venv libffi-dev libssl-dev conntrack sed cargo apache2 php snapd figlet ca-certificates gnupg lsb-release"
-HBGITREPO=https://github.com/ShaYmez/hblink3.git
+DEP="wget curl git sudo python3 conntrack sed apache2 php libapache2-mod-php whiptail figlet ca-certificates gnupg lsb-release"
 HBGITMONREPO=https://github.com/ShaYmez/HBMonv2.git
 echo ""
 echo "------------------------------------------------------------------------------"
@@ -124,7 +131,8 @@ install_docker_and_dependencies() {
         
         # Add Docker GPG key
         echo "Adding Docker GPG key..."
-        curl -fsSL ${DOCKER_REPO_URL}/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        rm -f /usr/share/keyrings/docker-archive-keyring.gpg
+        curl -fsSL ${DOCKER_REPO_URL}/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         
         if [ ! -f /usr/share/keyrings/docker-archive-keyring.gpg ]; then
                 echo "ERROR: Failed to download Docker GPG key"
@@ -209,6 +217,10 @@ EOF
         echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
         systemctl restart docker
         sleep 2
+
+        echo "Enabling Apache2..."
+        systemctl enable apache2
+        systemctl start apache2 || true
 }
 
 # Run Docker installation for supported OS versions
@@ -247,6 +259,7 @@ echo "Done."
 echo "------------------------------------------------------------------------------"
 echo "Installing control scripts /usr/local/sbin....."
 echo "------------------------------------------------------------------------------"
+        strip_crlf "$DIRDIR"
         cd "$DIRDIR/usr/local/sbin"
         cp -p menu /usr/local/sbin/hblink-menu
         cp -p flush /usr/local/sbin/hblink-flush
@@ -285,179 +298,30 @@ fi
 echo "Done."
         
 echo "------------------------------------------------------------------------------"
-echo "Downloading and installing HBMonv2 Dashboard....."
+echo "Downloading HBMonv2 dashboard files....."
 echo "------------------------------------------------------------------------------"
 sleep 2
 cd /opt/
-mkdir -p tmp
-chmod 0755 /opt/tmp/
-cd /opt/
-git clone $HBGITMONREPO
-cd $HBMONDIR
-if [ -e monitor.py ]
+if [ -d "$HBMONDIR" ]; then
+        echo "Existing /opt/HBMonv2 found — updating from git..."
+        cd "$HBMONDIR"
+        git pull --ff-only || true
+else
+        git clone $HBGITMONREPO
+        cd $HBMONDIR
+fi
+if [ -e html/info.php ]
 then
         echo "--------------------------------------------------------------------------------"
-        echo "It looks like HBMonitor installed correctly. The installation will now proceed. "
+        echo "It looks like HBMonv2 dashboard files are present. The installation will proceed."
         echo "--------------------------------------------------------------------------------"
         else
         echo "-------------------------------------------------------------------------------------------"
-        echo "I dont see HBMonitor installed! Please check your configuration and try again. Exiting....."
+        echo "I dont see HBMonv2 dashboard files! Please check your configuration and try again. Exiting."
         echo "-------------------------------------------------------------------------------------------"
-        exit 0
+        exit 1
 fi
 echo "Done."
-echo ""
-echo ""
-echo "------------------------------------------------------------------------------"
-echo "Installing HBMonv2 configuration....."
-echo "------------------------------------------------------------------------------"
-sleep 2
-
-# Helper function to install pip packages in virtual environment
-pip_install() {
-        local args="$@"
-        echo "Installing Python packages: $args"
-        if [ -z "$VIRTUAL_ENV" ]; then
-                echo "ERROR: Virtual environment not activated"
-                return 1
-        fi
-        if pip3 install $args; then
-                echo "Successfully installed: $args"
-                return 0
-        else
-                echo "ERROR: Failed to install: $args"
-                return 1
-        fi
-}
-
-echo "Installing Python dependencies..."
-cd $HBMONDIR
-
-# Create and use a virtual environment (modern approach for all Debian versions)
-echo "Creating Python virtual environment..."
-
-# Create virtual environment
-if [ ! -d "$HBMONDIR/venv" ]; then
-        python3 -m venv "$HBMONDIR/venv" || { echo "ERROR: Failed to create virtual environment"; exit 1; }
-        echo "Virtual environment created successfully at $HBMONDIR/venv"
-else
-        echo "Virtual environment already exists at $HBMONDIR/venv"
-fi
-
-# Activate virtual environment
-source "$HBMONDIR/venv/bin/activate" || { echo "ERROR: Failed to activate virtual environment"; exit 1; }
-# Verify activation by checking VIRTUAL_ENV is set
-if [ -z "$VIRTUAL_ENV" ]; then
-        echo "ERROR: Virtual environment activation failed - VIRTUAL_ENV not set"
-        exit 1
-fi
-echo "Virtual environment activated"
-
-# Upgrade pip in the virtual environment
-if ! pip3 install --upgrade pip; then
-        echo "WARNING: Failed to upgrade pip in virtual environment, continuing with existing version..."
-fi
-
-# Install setuptools and wheel first
-if ! pip_install setuptools wheel; then
-        echo "ERROR: Failed to install setuptools and wheel"
-        echo "Please check your internet connection and Python installation"
-        exit 1
-fi
-
-# Check if requirements.txt exists before trying to install
-if [ -f requirements.txt ]; then
-        if ! pip_install -r requirements.txt; then
-                echo "ERROR: Failed to install packages from requirements.txt"
-                echo "This may be due to network issues or missing system dependencies"
-                exit 1
-        fi
-else
-        echo "WARNING: requirements.txt not found in $HBMONDIR"
-        echo "Continuing installation without requirements.txt dependencies..."
-fi
-
-# Install attrs with --force flag (note: --force is deprecated, using --force-reinstall)
-if ! pip_install attrs --force-reinstall; then
-        echo "WARNING: Failed to install attrs with --force-reinstall, trying without force..."
-        if ! pip_install attrs; then
-                echo "ERROR: Failed to install attrs package"
-                exit 1
-        fi
-fi
-
-echo Install /opt/HBMonv2/config.py ...
-cat << EOF > /opt/HBMonv2/config.py
-###############################################################################
-#                    HBMonv2 Configuration File Example
-#         Copyright (C) 2013-2018 Cortney T. Buffington, N0MJS n0mjs@me.com
-#         Copyright (C) 2025 Shane aka, ShaYmez <shane@freestar.network>
-###############################################################################
-
-# ---- FEATURE TOGGLES --------------------------------------------------------
-CONFIG_INC      = True    # Include HBlink stats
-HOMEBREW_INC    = True    # Display Homebrew Peers status
-LASTHEARD_INC   = True    # Display lastheard table on main page
-BRIDGES_INC     = False   # Display Bridge status and button
-EMPTY_MASTERS   = False   # Enable (True) or Disable (False) empty masters in status
-
-# ---- CONNECTION SETTINGS ----------------------------------------------------
-HBLINK_IP       = '127.0.0.1'    # HBlink's IP Address
-HBLINK_PORT     = 4321           # HBlink's TCP reporting socket
-FREQUENCY       = 10             # Frequency (secs) to push updates to web clients
-CLIENT_TIMEOUT  = 0              # Timeout clients after N secs (0=disable)
-
-# ---- NETWORK FILTERING ------------------------------------------------------
-# To hide in lastheard: provide comma-separated NETWORK IDs
-# Example: "260210,260211,260212"
-OPB_FILTER      = ""
-
-# ---- ALIAS FILES AND PATHS --------------------------------------------------
-PATH            = './'                           # Base path (MUST END IN '/')
-PEER_FILE       = 'peer_ids.json'                # Auto-download
-SUBSCRIBER_FILE = 'subscriber_ids.json'          # Auto-download
-TGID_FILE       = 'talkgroup_ids.json'           # User provided
-LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # Optional, user provided ('' if not used)
-LOCAL_PEER_FILE = 'local_peer_ids.json'          # Optional, user provided ('' if not used)
-LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # Optional, user provided ('' if not used)
-FILE_RELOAD     = 14                             # Days before reloading MARC files
-
-# ---- ALIAS DOWNLOAD URLS ----------------------------------------------------
-PEER_URL        = 'https://radioid.net/static/rptrs.json'
-SUBSCRIBER_URL  = 'https://radioid.net/static/users.json'
-
-# ---- LOGGING SETTINGS -------------------------------------------------------
-LOG_PATH        = './log/'               # MUST END IN '/'
-LOG_NAME        = 'hbmon.log'
-
-###############################################################################
-#                        END OF CONFIGURATION FILE
-###############################################################################
-
-EOF
-                cp utils/hbmon.service /lib/systemd/system/
-                
-                # Update the service file to use virtual environment (for all Debian versions)
-                echo "Updating hbmon.service to use virtual environment..."
-                # Update ExecStart to use venv Python (only if not already using venv)
-                if ! grep -q "$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
-                        # Replace common Python interpreter paths with venv path
-                        sed -i "s|ExecStart=/usr/bin/python3|ExecStart=$HBMONDIR/venv/bin/python3|g" /lib/systemd/system/hbmon.service
-                        sed -i "s|ExecStart=python3 |ExecStart=$HBMONDIR/venv/bin/python3 |g" /lib/systemd/system/hbmon.service
-                        
-                        # Verify the service file was updated correctly
-                        if grep -q "ExecStart=$HBMONDIR/venv/bin/python3" /lib/systemd/system/hbmon.service; then
-                                echo "Service file updated to use virtual environment"
-                        else
-                                echo "WARNING: Service file update may not have completed correctly"
-                                echo "Please manually verify /lib/systemd/system/hbmon.service uses $HBMONDIR/venv/bin/python3"
-                        fi
-                else
-                        echo "Service file already configured to use virtual environment"
-                fi
-                
-                cp utils/lastheard /etc/cron.daily/
-                chmod +x /etc/cron.daily/lastheard
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
@@ -465,8 +329,12 @@ echo "Installing HBMonv2 HTML Dashboard....."
 echo "------------------------------------------------------------------------------"
 sleep 2
                 cd /var/www/html/
-                mv /var/www/html/index.html /var/www/html/index_APACHE.html
+                if [ -f /var/www/html/index.html ]; then
+                        mv /var/www/html/index.html /var/www/html/index_APACHE.html
+                fi
                 cp -a /opt/HBMonv2/html/. /var/www/html/
+                # Dashboard lastheard log is written by the hbmon container
+                sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' /var/www/html/log.php
 if [ -e info.php ]
 then
         echo "------------------------------------------------------------------------------------"
@@ -476,17 +344,19 @@ then
         echo "-----------------------------------------------------------------------------------------------"
         echo "I dont see the dashboard installed! Please check your configuration and try again. Exiting....."
         echo "-----------------------------------------------------------------------------------------------"
-        exit 0
+        exit 1
 fi
 echo "Done."
 
 echo "Install crontab..."
 cat << EOF > /etc/cron.daily/lastheard
 #!/bin/bash
-mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
-/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
-mv /opt/HBMonv2/log/lastheard.log /opt/HBMonv2/log/lastheard.log.save
-/usr/bin/tail -150 /opt/HBMonv2/log/lastheard.log.save > /opt/HBMonv2/log/lastheard.log
+if [ -f /var/log/hbmon/lastheard.log ]; then
+        mv /var/log/hbmon/lastheard.log /var/log/hbmon/lastheard.log.save
+        /usr/bin/tail -150 /var/log/hbmon/lastheard.log.save > /var/log/hbmon/lastheard.log
+        chown 54000:54000 /var/log/hbmon/lastheard.log 2>/dev/null || true
+        chmod 644 /var/log/hbmon/lastheard.log 2>/dev/null || true
+fi
 EOF
 chmod 755 /etc/cron.daily/lastheard
 
@@ -504,13 +374,25 @@ sleep 2
          chmod 0755 /etc/hblink3
 
          echo make json directory...
-         mkdir -p /etc/hblink3/json/
+         mkdir -p /etc/hblink3/json/templates
+         touch /etc/hblink3/json/templates/lastheard.html
 
          echo get json files...
          cd /etc/hblink3/json
-         curl https://radioid.net/static/users.json -o subscriber_ids.json
-         curl https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json
-         curl https://radioid.net/static/rptrs.json -o peer_ids.json
+         curl -fsSL https://radioid.net/static/users.json -o subscriber_ids.json
+         curl -fsSL https://freestar.network/downloads/talkgroup_ids.json -o talkgroup_ids.json
+         curl -fsSL https://radioid.net/static/rptrs.json -o peer_ids.json
+         # Local alias stubs (optional overlays used by HBMonv2)
+         if [ -d /opt/HBMonv2/data ]; then
+                cp -n /opt/HBMonv2/data/local_subscriber_ids.json /etc/hblink3/json/ 2>/dev/null || true
+                cp -n /opt/HBMonv2/data/local_peer_ids.json /etc/hblink3/json/ 2>/dev/null || true
+                cp -n /opt/HBMonv2/data/local_talkgroup_ids.json /etc/hblink3/json/ 2>/dev/null || true
+         fi
+
+         echo Make HBMonv2 log directory...
+         mkdir -p /var/log/hbmon
+         chmod 0755 /var/log/hbmon
+         touch /var/log/hbmon/hbmon.log /var/log/hbmon/lastheard.log
 echo "Done"
 echo ""
 echo ""
@@ -874,13 +756,68 @@ echo "--------------------------------------------------------------------------
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
+echo "Installing HBMonv2 Docker configuration....."
+echo "------------------------------------------------------------------------------"
+sleep 2
+        echo Install /etc/hblink3/config.py ...
+cat << EOF > /etc/hblink3/config.py
+###############################################################################
+#                    HBMonv2 Configuration File (Docker)
+#         Copyright (C) 2013-2018 Cortney T. Buffington, N0MJS n0mjs@me.com
+#         Copyright (C) 2026 Shane aka, ShaYmez <shane@freestar.network>
+###############################################################################
+
+# ---- FEATURE TOGGLES --------------------------------------------------------
+CONFIG_INC      = True    # Include HBlink stats
+HOMEBREW_INC    = True    # Display Homebrew Peers status
+LASTHEARD_INC   = True    # Display lastheard table on main page
+BRIDGES_INC     = False   # Display Bridge status and button
+EMPTY_MASTERS   = False   # Enable (True) or Disable (False) empty masters in status
+
+# ---- CONNECTION SETTINGS ----------------------------------------------------
+# Use the HBlink container address on the compose network (not 127.0.0.1)
+HBLINK_IP       = '172.16.238.10'
+HBLINK_PORT     = 4321           # HBlink's TCP reporting socket
+FREQUENCY       = 10             # Frequency (secs) to push updates to web clients
+CLIENT_TIMEOUT  = 0              # Timeout clients after N secs (0=disable)
+
+# ---- NETWORK FILTERING ------------------------------------------------------
+# To hide in lastheard: provide comma-separated NETWORK IDs
+# Example: "260210,260211,260212"
+OPB_FILTER      = ""
+
+# ---- ALIAS FILES AND PATHS --------------------------------------------------
+PATH            = './data/'                      # Base path (MUST END IN '/')
+PEER_FILE       = 'peer_ids.json'                # Auto-download
+SUBSCRIBER_FILE = 'subscriber_ids.json'          # Auto-download
+TGID_FILE       = 'talkgroup_ids.json'           # User provided
+LOCAL_SUB_FILE  = 'local_subscriber_ids.json'    # Optional, user provided ('' if not used)
+LOCAL_PEER_FILE = 'local_peer_ids.json'          # Optional, user provided ('' if not used)
+LOCAL_TGID_FILE = 'local_talkgroup_ids.json'     # Optional, user provided ('' if not used)
+FILE_RELOAD     = 14                             # Days before reloading MARC files
+
+# ---- ALIAS DOWNLOAD URLS ----------------------------------------------------
+PEER_URL        = 'https://radioid.net/static/rptrs.json'
+SUBSCRIBER_URL  = 'https://radioid.net/static/users.json'
+
+# ---- LOGGING SETTINGS -------------------------------------------------------
+LOG_PATH        = './log/'               # MUST END IN '/'
+LOG_NAME        = 'hbmon.log'
+
+###############################################################################
+#                        END OF CONFIGURATION FILE
+###############################################################################
+EOF
+
+echo "------------------------------------------------------------------------------"
 echo "Installing docker-compose YAML and set up to run the server....."
 echo "------------------------------------------------------------------------------"
 sleep 2
-                cd $INSDIR
-                git clone $HBGITREPO
-                cd $HBLINKTMP
-                cp docker-compose.yml /etc/hblink3/docker-compose.yml
+                if [ ! -f "$DIRDIR/docker-compose.yml" ]; then
+                        echo "ERROR: docker-compose.yml not found in installer directory: $DIRDIR"
+                        exit 1
+                fi
+                cp -f "$DIRDIR/docker-compose.yml" /etc/hblink3/docker-compose.yml
                 cd $HBDIR
 if [ -e docker-compose.yml ]
 then
@@ -891,7 +828,7 @@ then
         echo "-----------------------------------------------------------------------------------------------"
         echo "I dont see the docker-compose file! Please check your configuration and try again. Exiting....."
         echo "-----------------------------------------------------------------------------------------------"
-        exit 0
+        exit 1
 fi
 echo "Done"
 sleep 2
@@ -902,27 +839,35 @@ echo "Set up permissions....."
 echo "------------------------------------------------------------------------------"
         chmod -R 755 /etc/hblink3
         chmod -R 777 /etc/hblink3/json
+        chmod 755 /var/log/hbmon
+        chmod 644 /etc/hblink3/config.py /etc/hblink3/docker-compose.yml
         chown -R 54000 /etc/hblink3
         chown -R 54000 /var/log/hblink
+        chown -R 54000 /var/log/hbmon
 echo ""
 echo ""
 echo "------------------------------------------------------------------------------"
-echo "Wake up the docker container and pull latest docker image from ShaYmez....."
+echo "Stop leftover host HBMon (systemd) if present....."
 echo "------------------------------------------------------------------------------"
-        docker-compose up -d
+        if systemctl is-active --quiet hbmon 2>/dev/null; then
+                systemctl disable --now hbmon || true
+        fi
+        rm -f /lib/systemd/system/hbmon.service /etc/systemd/system/hbmon.service
+        systemctl daemon-reload 2>/dev/null || true
+echo "Done."
+echo ""
+echo ""
+echo "------------------------------------------------------------------------------"
+echo "Wake up the docker stack and pull latest images from ShaYmez....."
+echo "------------------------------------------------------------------------------"
+        cd $HBDIR
+        docker compose pull
+        docker compose up -d
         sleep 10
-        docker-compose down
+        docker compose down --remove-orphans
 echo "Done."
 sleep 2
 echo "Stopping container....."
-sleep 2
-echo ""
-echo ""
-echo "------------------------------------------------------------------------------"
-echo "Finishing up.....        Cleaning up installation files.....     /opt/tmp....."
-echo "------------------------------------------------------------------------------"
-        rm -rf /opt/tmp
-echo "Done."
 sleep 2
 echo ""
 echo ""
@@ -933,20 +878,18 @@ sleep 5
         sleep 10
         clear
         sleep 2
-echo "Starting HBlink....."
+echo "Starting HBlink3 + HBMonv2....."
         sleep 5
         cd $HBDIR
-        docker-compose up -d
-        sleep 5
+        docker compose up -d
+        sleep 8
 figlet "HBlink3"
-sleep 3
-        docker container logs hblink
+sleep 2
+        docker container logs hblink 2>/dev/null | tail -30
 echo "Done."
 sleep 2
-echo "Starting HBmon....."
-        systemctl enable hbmon
-        systemctl start hbmon
 figlet "HBMonv2"
+        docker container logs hbmon 2>/dev/null | tail -30
 echo ""
 echo ""
 clear
@@ -954,7 +897,12 @@ sleep 2
 echo "HBlink First Time Setup....."
 sleep 1
 figlet "WhipTAIL'"
+if [ -t 0 ]; then
         hblink-initial-setup
+else
+        echo "Non-interactive session: skipping first-time setup menu."
+        echo "Run 'hblink-menu' or 'hblink-initial-setup' to configure."
+fi
 sleep 1
 echo "Done."
 sleep 2
@@ -966,8 +914,8 @@ echo "                 The HBlink3 Docker Install Is Complete!                 "
 echo ""
 echo "              ******* To Update run 'hblink-update *******               "
 echo ""
-echo "        Use 'docker container logs hblink' to check the status.          "
-echo "                  logs are parked in /var/log/hblink.                    "
+        echo "     Use 'docker container logs hblink' or 'hbmon' to check status.      "
+        echo "         logs are parked in /var/log/hblink and /var/log/hbmon.          "
 echo "  Just make sure this computer can be accessed over UDP specified port   "
 echo "  You will need to edit your config and then run the following command   "
 echo ""

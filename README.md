@@ -6,7 +6,7 @@ This is a multi-arch docker installer for HBlink3 and HBMonv2 combined for Debia
 **Important:** Destructive Installer!
 This is a destructive installer and is recommended to be built on a freshly installed machine running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS.
 
-**Note:** Debian 12 (Bookworm) and 13 (Trixie) along with Ubuntu 22.04 and 24.04 LTS are fully supported with proper PEP 668 compliant Python package management using virtual environments. HBMonv2 now runs in an isolated Python virtual environment. See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
+**Note:** Debian 12 (Bookworm) and 13 (Trixie) along with Ubuntu 22.04 and 24.04 LTS are fully supported. HBlink3 and HBMonv2 both run as Docker containers on a shared bridge network (same layout as the XPeer / RYMonv3 stack). See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
 ![HBlink](img/HBLINK_logoV1.png "HBlink")
 
@@ -22,13 +22,13 @@ Docker container pre-built for multi-arch!
 * ppc64
 * lots more!
 
-This installer builds the entire HBlink server! It includes all of the dependencies needed to run HBlink3 within docker via docker-compose. The install also includes HBMonv2, which is a dashboard designed for HBlink3 by SP2ONG, re-factored by M0VUB. This runs side by side, but at this time runs on the host machine using Systemd. HBMonv2 is controlled by a system unit file which runs the python code on the host.
+This installer builds the entire HBlink server! It includes all of the dependencies needed to run HBlink3 and HBMonv2 within docker via docker-compose. HBMonv2 is a dashboard designed for HBlink3 by SP2ONG, re-factored by M0VUB. Both services run in Docker on a private bridge (`172.16.238.0/24`), matching the XPeer installer (RYSEN + RYMonv3).
 
-This installer includes all the usual libs and packages including docker, apache2, php and python3. It is recommended that you 
-install this on a 'clean machine'. The script is destructive and is not designed to be used on an exisiting machine that has other software on it! YOU HAVE BEEN WARNED!
+This installer includes all the usual libs and packages including docker, apache2 and php. It is recommended that you 
+install this on a 'clean machine'. The script is destructive and is not designed to be used on an existing machine that has other software on it! YOU HAVE BEEN WARNED!
 
 ### Prerequisite
-The host system must be running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS. **Debian 10 and Ubuntu 20.04 are no longer supported** due to the requirement for Docker Compose v2 and modern Python package management. The installer has been tested on these OS versions and works on most architectures. The system requires, at a minimum; 1 core, 512mb of ram, the required spec to run docker and additional processes! The system must be up-to-date and have Git installed. You can install Git from the CLI.
+The host system must be running Debian 11, 12, 13 or Ubuntu 22.04, 24.04 LTS. **Debian 10 and Ubuntu 20.04 are no longer supported** due to the requirement for Docker Compose v2. The installer has been tested on these OS versions and works on most architectures. The system requires, at a minimum; 1 core, 512mb of ram, the required spec to run docker and additional processes! The system must be up-to-date and have Git installed. You can install Git from the CLI.
 
 **Docker Compose v2:** This installer exclusively uses Docker Compose v2 from the official Docker repositories. The docker-compose-plugin package is automatically installed, providing the `docker compose` command (note the space). A compatibility wrapper is also created to support the legacy `docker-compose` command (with hyphen) for backward compatibility with existing scripts.
 
@@ -91,13 +91,13 @@ hblink-menu
 Then select option 11 "Uninstall HBlink3"
 
 The uninstall script will:
-- Stop all HBlink3 services (Docker containers and HBMonv2)
-- Remove Docker containers and HBlink images
-- Remove systemd service files
+- Stop all HBlink3 services (Docker containers: `hblink` and `hbmon`)
+- Remove Docker containers and HBlink / HBMon images
+- Remove leftover systemd service files if present
 - Remove cron jobs
 - Remove control scripts from /usr/local/sbin
 - Backup configurations to /root/hblink3-backup-[timestamp]
-- Remove installation directories (/etc/hblink3, /opt/HBMonv2, /var/log/hblink)
+- Remove installation directories (/etc/hblink3, /opt/HBMonv2, /var/log/hblink, /var/log/hbmon)
 - Restore default Apache index page
 
 **Note:** Docker, Apache2, PHP, and other system packages will NOT be removed during uninstallation.
@@ -119,16 +119,20 @@ sudo nano docker-compose.yml
 ```sh
 nano hblink.cfg
 nano rules.py
+nano config.py
 ```
 12. Check the logs for errors!
 ```sh
 docker container logs hblink
+docker container logs hbmon
 or
 /var/log/hblink/hblink.log
+/var/log/hbmon/hbmon.log
 ```
-10. Interact with HBMonv2 (Dashboard engine)
+13. Interact with HBMonv2 (Dashboard engine, Docker)
 ```sh
-systemctl start|stop|restart|status hbmon
+docker compose -f /etc/hblink3/docker-compose.yml restart hbmon
+docker container logs hbmon
 ```
 
 ![New HBMonv2 Banner](img/HBLINK_logoV2.png "HBMonv2")
@@ -141,15 +145,17 @@ Within this installation includes the new HBMonv2 by Weldek SP2ONG
 * Includes lastheard database with auto cron installed	
 * Includes talkgroup html editable page	
 
-### Technical Details - Python Package Management
+### Technical Details - Docker stack
 
-The installer uses modern Python package management following PEP 668 standards for all supported OS versions:
-- HBMonv2 runs in an isolated Python virtual environment at `/opt/HBMonv2/venv`
-- All Python dependencies are installed within this virtual environment, avoiding system-wide package conflicts
-- The systemd service automatically uses the virtual environment's Python interpreter
-- This approach eliminates "externally-managed-environment" errors and conflicts with system packages
+HBlink3 and HBMonv2 run as sibling containers on `app_net` (`172.16.238.0/24`):
 
-This ensures clean, maintainable installations that follow modern Python best practices across all supported Debian and Ubuntu versions.
+- **hblink** (`shaymez/hblink3:latest`) at `172.16.238.10` — reporting socket `4321`
+- **hbmon** (`shaymez/hbmonv2:latest`) at `172.16.238.12` — websocket `9000`
+- Dashboard config: `/etc/hblink3/config.py` (`HBLINK_IP` must be the HBlink container address, not `127.0.0.1`)
+- Alias JSON files are shared at `/etc/hblink3/json`
+- Apache2 still serves the PHP dashboard from `/var/www/html`
+
+This matches the XPeer installer layout (RYSEN + RYMonv3) and avoids host Python / systemd for the monitor.
 
 ## Easy Installation And Upgrade
 The installation can be upgraded either by the use of a future scripts or by manually backing up your configuration and re-running the install script. Also the ability and really cool feature of docker-compose is that its easy to update the container with fresh images! Run by a simple command. Make sure you are in the /etc/hblink3 dir.
