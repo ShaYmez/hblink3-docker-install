@@ -76,6 +76,9 @@ hblink-stop
 hblink-restart
 hblink-flush
 hblink-update
+hblink-upgrade
+hblink-dashboard-upgrade
+hblink-tgmanager-user
 hblink-uninstall
 ```
 
@@ -88,7 +91,7 @@ or
 ```sh
 hblink-menu
 ```
-Then select option 11 "Uninstall HBlink3"
+Then **System** → **Uninstall HBlink3**
 
 The uninstall script will:
 - Stop all HBlink3 services (Docker containers: `hblink` and `hbmon`)
@@ -211,7 +214,7 @@ Additive only (new files + Talkgroup Manager, leave existing pages):
 hblink-dashboard-upgrade --keep-pages
 ```
 
-Create a Talkgroup Manager login from the control menu (**Talkgroup Manager User**) or:
+Create a Talkgroup Manager login from the control menu (**Dashboard** → **Talkgroup Manager User**) or:
 
 ```sh
 hblink-tgmanager-user

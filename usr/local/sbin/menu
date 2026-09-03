@@ -2,11 +2,9 @@
 
 # HBLINK3 DOCKER CONTROL SCRIPTS V2.0
 # Version 1.5.1 (14122024)
-# This script written by Shane Daley M0VUB. The script gracefully shuts down services while services are cleaned and logs are truncated.
-# We can also add items in this script for future use like updates or further log trims.
-# Add to the cron tab for auto execution
+# Control menu with submenus for services, config, dashboard, updates, and system.
 
-#   Copyright (C) 2020-2025 Shane P. Daley  M0VUB <shane@freestar.network>
+#   Copyright (C) 2020-2026 Shane P. Daley  M0VUB <shane@freestar.network>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -15,68 +13,113 @@
 #
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
 
-# Main MENU system.....
+services_menu() {
 while : ; do
-menuopt=$(whiptail --title "HBlink3 Control Version 2.0" --menu "Select option by using the up and down arrows on your keyboard. Once selected please press enter:" 28 60 16 \
-1 " Stop HBlink " \
-2 " Start HBlink " \
+opt=$(whiptail --title "HBlink3 — Services" --menu "Start, stop, and flush the Docker stack." 16 58 6 \
+1 " Start HBlink " \
+2 " Stop HBlink " \
 3 " Restart HBlink " \
-4 " Update HBlink / Docker " \
-5 " Flush HBlink / Truncate Logs " \
-6 " Edit HBlink Config " \
-7 " Edit HBlink Rules " \
-8 " Edit Dashboard Config " \
-9 " Talkgroup Manager User " \
-10 " Upgrade HBMon to Docker " \
-11 " Upgrade Dashboard HTML " \
-12 " System Update / apt update " \
-13 " Uninstall HBlink3 " \
-14 " Reboot Entire Server " \
-15 " Shutdown Entire Server " 3>&1 1>&2 2>&3)
+4 " Flush HBlink / Truncate Logs " \
+b " Back " 3>&1 1>&2 2>&3) || return
+case $opt in
+1) sudo /usr/local/sbin/hblink-start ;;
+2) sudo /usr/local/sbin/hblink-stop ;;
+3) sudo /usr/local/sbin/hblink-restart ;;
+4) sudo /usr/local/sbin/hblink-flush ;;
+b) return ;;
+esac
+done
+}
+
+config_menu() {
+while : ; do
+opt=$(whiptail --title "HBlink3 — Configuration" --menu "Edit server and dashboard config files." 16 58 6 \
+1 " Edit HBlink Config " \
+2 " Edit HBlink Rules " \
+3 " Edit Dashboard Config " \
+4 " Edit Dashboard PHP Config " \
+b " Back " 3>&1 1>&2 2>&3) || return
+case $opt in
+1) sudo nano /etc/hblink3/hblink.cfg ;;
+2) sudo nano /etc/hblink3/rules.py ;;
+3) sudo nano /etc/hblink3/config.py ;;
+4) sudo nano /var/www/html/include/config.php ;;
+b) return ;;
+esac
+done
+}
+
+dashboard_menu() {
+while : ; do
+opt=$(whiptail --title "HBlink3 — Dashboard" --menu "Talkgroup Manager login and HTML refresh." 15 58 5 \
+1 " Talkgroup Manager User " \
+2 " Upgrade Dashboard HTML " \
+b " Back " 3>&1 1>&2 2>&3) || return
+case $opt in
+1) sudo /usr/local/sbin/hblink-tgmanager-user ;;
+2) sudo /usr/local/sbin/hblink-dashboard-upgrade ;;
+b) return ;;
+esac
+done
+}
+
+updates_menu() {
+while : ; do
+opt=$(whiptail --title "HBlink3 — Updates" --menu "Docker images, HBMon migrate, and apt." 16 58 6 \
+1 " Update HBlink / Docker " \
+2 " Upgrade HBMon to Docker " \
+3 " System Update / apt update " \
+b " Back " 3>&1 1>&2 2>&3) || return
+case $opt in
+1) sudo /usr/local/sbin/hblink-update ;;
+2) sudo /usr/local/sbin/hblink-upgrade ;;
+3) sudo apt-get update -y && sudo apt-get upgrade ;;
+b) return ;;
+esac
+done
+}
+
+system_menu() {
+while : ; do
+opt=$(whiptail --title "HBlink3 — System" --menu "Uninstall or power off the host." 15 58 5 \
+1 " Uninstall HBlink3 " \
+2 " Reboot Entire Server " \
+3 " Shutdown Entire Server " \
+b " Back " 3>&1 1>&2 2>&3) || return
+case $opt in
+1) sudo /usr/local/sbin/hblink-uninstall ;;
+2) sudo reboot ;;
+3) sudo shutdown now ;;
+b) return ;;
+esac
+done
+}
+
+while : ; do
+menuopt=$(whiptail --title "HBlink3 Control Version 2.0" --menu "Select a section. Cancel or Esc exits." 18 58 8 \
+1 " Services " \
+2 " Configuration " \
+3 " Dashboard " \
+4 " Updates " \
+5 " System " 3>&1 1>&2 2>&3)
 exitstatus=$?
-# Back-end HBlink3 menu
 if [ $exitstatus = 0 ]; then
-    echo "You have chosen option:" $menuopt
+        echo "You have chosen option:" $menuopt
 else
-    echo "Type 'hblink-menu' to enter HBlink3 Control Menu "; break;
+        echo "Type 'hblink-menu' to enter HBlink3 Control Menu "
+        break
 fi
-# Action
 case $menuopt in
-1)
-sudo /usr/local/sbin/hblink-stop ;;
-2)
-sudo /usr/local/sbin/hblink-start ;;
-3)
-sudo /usr/local/sbin/hblink-restart ;;
-4)
-sudo /usr/local/sbin/hblink-update ;;
-5)
-sudo /usr/local/sbin/hblink-flush ;;
-6)
-sudo nano /etc/hblink3/hblink.cfg ;;
-7)
-sudo nano /etc/hblink3/rules.py ;;
-8)
-sudo nano /etc/hblink3/config.py ;;
-9)
-sudo /usr/local/sbin/hblink-tgmanager-user ;;
-10)
-sudo /usr/local/sbin/hblink-upgrade ;;
-11)
-sudo /usr/local/sbin/hblink-dashboard-upgrade ;;
-12)
-sudo apt-get update -y && sudo apt-get upgrade ;;
-13)
-sudo /usr/local/sbin/hblink-uninstall ;;
-14)
-sudo reboot ;;
-15)
-sudo shutdown now ;
+1) services_menu ;;
+2) config_menu ;;
+3) dashboard_menu ;;
+4) updates_menu ;;
+5) system_menu ;;
 esac
 done
 exit 0
 
-# Wiptail menu system by ShaYmez https://github/ShaYmez
+# Whiptail menu system by ShaYmez https://github.com/ShaYmez

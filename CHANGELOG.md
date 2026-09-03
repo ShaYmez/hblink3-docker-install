@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Installer no longer clones hblink3 only to obtain compose — it copies `docker-compose.yml` from the installer tree
 - Control scripts (`hblink-start` / `stop` / `restart` / `flush` / `update` / `uninstall`) manage the full Docker stack
 - Menu "Edit Dashboard Config" now opens `/etc/hblink3/config.py`
+- `hblink-menu` uses submenus: Services, Configuration, Dashboard, Updates, System
 - Dropped host Python venv, pip, cargo, snapd, and `hbmon.service` for the dashboard engine
 - `hblink-update` now runs `docker compose pull` instead of deleting every local image
 - First-time setup menu is skipped automatically on non-interactive installs
