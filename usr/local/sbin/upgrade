@@ -21,8 +21,8 @@ fi
 HBDIR=/etc/hblink3
 HBMONDIR=/opt/HBMonv2
 INSTALLER_PATH=$(cat "${HBDIR}/.installer_path" 2>/dev/null || echo "/opt/hblink3-docker-install")
-STAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP="/root/hblink3-pre-upgrade-${STAMP}.tar.gz"
+BACKUP="/root/hblink3-pre-upgrade.tar.gz"
+BACKUP_OLD="/root/hblink3-pre-upgrade.tar.gz.old"
 RADIO_UID=54000
 
 clear
@@ -84,15 +84,34 @@ if ! docker compose version >/dev/null 2>&1; then
         exit 1
 fi
 
-echo "Backing up current config to ${BACKUP}..."
-BACKUP_PATHS="${HBDIR}"
-[ -f "${HBMONDIR}/config.py" ] && BACKUP_PATHS="${BACKUP_PATHS} ${HBMONDIR}/config.py"
-[ -d "${HBMONDIR}/log" ] && BACKUP_PATHS="${BACKUP_PATHS} ${HBMONDIR}/log"
-[ -f /lib/systemd/system/hbmon.service ] && BACKUP_PATHS="${BACKUP_PATHS} /lib/systemd/system/hbmon.service"
-[ -f /var/www/html/include/config.php ] && BACKUP_PATHS="${BACKUP_PATHS} /var/www/html/include/config.php"
-# shellcheck disable=SC2086
-tar czf "$BACKUP" $BACKUP_PATHS 2>/dev/null || tar czf "$BACKUP" "$HBDIR"
-echo "Backup: ${BACKUP}"
+LEGACY=0
+if systemctl is-active --quiet hbmon 2>/dev/null || systemctl is-enabled --quiet hbmon 2>/dev/null; then
+        LEGACY=1
+fi
+if [ -f "${HBDIR}/docker-compose.yml" ] && ! grep -q 'container_name: hbmon' "${HBDIR}/docker-compose.yml"; then
+        LEGACY=1
+fi
+if [ ! -f "${HBDIR}/docker-compose.yml" ]; then
+        LEGACY=1
+fi
+
+# Drop timestamped tarballs from earlier upgrade builds (keep at most two stable files)
+rm -f /root/hblink3-pre-upgrade-[0-9]*.tar.gz
+
+if [ "$LEGACY" -eq 1 ]; then
+        echo "Migrating host HBMon — backing up config to ${BACKUP} (replaces previous copy)..."
+        [ -f "$BACKUP" ] && mv -f "$BACKUP" "$BACKUP_OLD"
+        BACKUP_PATHS="${HBDIR}"
+        [ -f "${HBMONDIR}/config.py" ] && BACKUP_PATHS="${BACKUP_PATHS} ${HBMONDIR}/config.py"
+        [ -d "${HBMONDIR}/log" ] && BACKUP_PATHS="${BACKUP_PATHS} ${HBMONDIR}/log"
+        [ -f /lib/systemd/system/hbmon.service ] && BACKUP_PATHS="${BACKUP_PATHS} /lib/systemd/system/hbmon.service"
+        [ -f /var/www/html/include/config.php ] && BACKUP_PATHS="${BACKUP_PATHS} /var/www/html/include/config.php"
+        # shellcheck disable=SC2086
+        tar czf "$BACKUP" $BACKUP_PATHS 2>/dev/null || tar czf "$BACKUP" "$HBDIR"
+        echo "Backup: ${BACKUP}"
+else
+        echo "Already on Docker HBMon — skipping config tarball (use hblink-update for image pulls)."
+fi
 echo ""
 
 # Preserve Parrot flag from existing compose
@@ -206,25 +225,38 @@ cat << 'EOF' > /etc/cron.daily/lastheard
 if [ -f /var/log/hbmon/lastheard.log ]; then
         mv /var/log/hbmon/lastheard.log /var/log/hbmon/lastheard.log.save
         /usr/bin/tail -150 /var/log/hbmon/lastheard.log.save > /var/log/hbmon/lastheard.log
+        rm -f /var/log/hbmon/lastheard.log.save
         chown 54000:54000 /var/log/hbmon/lastheard.log 2>/dev/null || true
         chmod 644 /var/log/hbmon/lastheard.log 2>/dev/null || true
 fi
 EOF
 chmod 755 /etc/cron.daily/lastheard
 
+if [ -f "${INSTALLER_PATH}/files/hblink-logrotate" ]; then
+        cp -f "${INSTALLER_PATH}/files/hblink-logrotate" /etc/logrotate.d/hblink
+        chmod 644 /etc/logrotate.d/hblink
+fi
+
+if [ -f "${INSTALLER_PATH}/files/docker-daemon.json" ] && ! grep -q 'max-size' /etc/docker/daemon.json 2>/dev/null; then
+        echo "Capping Docker container logs (10m x 3)..."
+        cp -f "${INSTALLER_PATH}/files/docker-daemon.json" /etc/docker/daemon.json
+        systemctl restart docker
+        sleep 2
+fi
+
 if [ -f /var/www/html/log.php ]; then
         sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' /var/www/html/log.php
 fi
 
-if [ -d "${HBMONDIR}/html" ]; then
+if [ "$LEGACY" -eq 1 ] && [ -d "${HBMONDIR}/html" ]; then
         echo "Refreshing dashboard HTML (preserving include/config.php)..."
         if [ -f /var/www/html/include/config.php ]; then
-                cp -a /var/www/html/include/config.php "/tmp/hbmon-php-config-${STAMP}.php"
+                cp -a /var/www/html/include/config.php "/tmp/hbmon-php-config.$$.php"
         fi
         cp -a "${HBMONDIR}/html/." /var/www/html/
-        if [ -f "/tmp/hbmon-php-config-${STAMP}.php" ]; then
+        if [ -f "/tmp/hbmon-php-config.$$.php" ]; then
                 mkdir -p /var/www/html/include
-                mv "/tmp/hbmon-php-config-${STAMP}.php" /var/www/html/include/config.php
+                mv "/tmp/hbmon-php-config.$$.php" /var/www/html/include/config.php
         fi
         sed -i 's|/opt/HBMonv2/log/|/var/log/hbmon/|g' /var/www/html/log.php 2>/dev/null || true
 fi
@@ -244,6 +276,7 @@ chmod 644 "${HBDIR}/hblink.cfg" "${HBDIR}/rules.py" "${HBDIR}/config.py" 2>/dev/
 echo "Pulling images and starting HBlink3 + HBMonv2..."
 cd "$HBDIR"
 docker compose pull
+docker image prune -f
 docker compose up -d
 sleep 5
 docker ps
@@ -258,7 +291,11 @@ figlet "HBMonv2" 2>/dev/null || true
 echo "*************************************************************************"
 echo " Upgrade complete. hblink.cfg and rules.py were not modified."
 echo " Dashboard config: ${HBDIR}/config.py  (HBLINK_IP=172.16.238.10)"
-echo " Backup: ${BACKUP}"
+if [ "$LEGACY" -eq 1 ]; then
+        echo " One-time migrate backup: ${BACKUP}"
+else
+        echo " No new backup written (already on Docker HBMon)."
+fi
 echo " Host hbmon.service removed. Stack: docker compose in ${HBDIR}"
 echo "*************************************************************************"
 exit 0

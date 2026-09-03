@@ -177,7 +177,7 @@ That move:
 - Stops and removes `hbmon.service`
 - Installs compose with `hblink` + `hbmon` (`shaymez/hbmonv2:latest`)
 - Migrates `/opt/HBMonv2/config.py` to `/etc/hblink3/config.py` and sets `HBLINK_IP = 172.16.238.10`
-- Backs up first to `/root/hblink3-pre-upgrade-[timestamp].tar.gz`
+- Backs up **once** on migrate from host HBMon to `/root/hblink3-pre-upgrade.tar.gz` (replaces that file; one `.old` kept). Re-running upgrade on a Docker stack does not write another tarball.
 
 To refresh Docker images only (already on the compose stack):
 

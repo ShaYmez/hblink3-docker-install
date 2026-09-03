@@ -110,8 +110,7 @@ echo "--------------------------------------------------------------------------
 install_docker_and_dependencies() {
         echo "Installing Docker and dependencies..."
         
-        # Install base dependencies (python3-venv is included for all versions for consistency)
-        echo "Installing dependencies..."
+        echo "Installing Docker Engine and host packages (apache/php for the dashboard UI)..."
         apt-get update
         apt-get install -y $DEP
         sleep 2
@@ -213,8 +212,21 @@ EOF
         
         figlet "docker.io"
         
-        echo "Set userland-proxy to false..."
-        echo '{ "userland-proxy": false}' > /etc/docker/daemon.json
+        echo "Set userland-proxy to false and cap Docker json logs..."
+        if [ -f "$DIRDIR/files/docker-daemon.json" ]; then
+                cp -f "$DIRDIR/files/docker-daemon.json" /etc/docker/daemon.json
+        else
+                cat > /etc/docker/daemon.json << 'EOF'
+{
+  "userland-proxy": false,
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOF
+        fi
         systemctl restart docker
         sleep 2
 
@@ -354,11 +366,17 @@ cat << EOF > /etc/cron.daily/lastheard
 if [ -f /var/log/hbmon/lastheard.log ]; then
         mv /var/log/hbmon/lastheard.log /var/log/hbmon/lastheard.log.save
         /usr/bin/tail -150 /var/log/hbmon/lastheard.log.save > /var/log/hbmon/lastheard.log
+        rm -f /var/log/hbmon/lastheard.log.save
         chown 54000:54000 /var/log/hbmon/lastheard.log 2>/dev/null || true
         chmod 644 /var/log/hbmon/lastheard.log 2>/dev/null || true
 fi
 EOF
 chmod 755 /etc/cron.daily/lastheard
+
+        if [ -f "$DIRDIR/files/hblink-logrotate" ]; then
+                cp -f "$DIRDIR/files/hblink-logrotate" /etc/logrotate.d/hblink
+                chmod 644 /etc/logrotate.d/hblink
+        fi
 
 sleep 2
 echo "------------------------------------------------------------------------------"
