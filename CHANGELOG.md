@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hblink-dashboard-upgrade` refreshes dashboard HTML from HBMonv2 (pages, CSS, footer, JS) without overwriting menu (`buttons.html`) or branding (`include/config.php`, existing `img/`). One HTML backup at `/root/hblink-dashboard-pre-upgrade.tar.gz`. `--all` also replaces menu/branding from upstream (logos still kept).
 - Menu option **Talkgroup Manager User** (`hblink-tgmanager-user`) creates, updates, or deletes a hashed login in `/etc/hblink3/tgmanager.users` (group `www-data` so Apache can read it)
 - `hblink-ssl <fqdn> <email>` obtains a Let's Encrypt cert for the Apache dashboard (HTTP→HTTPS) and terminates `wss://fqdn:9000` in front of hbmon (container bound to `127.0.0.1:9001`)
+- `tests/check.sh` (GitHub Actions on push/PR) syntax-checks every script, verifies installer file inventory, and dry-runs `hblink-ssl` / dashboard-upgrade / uninstall. On a live box: `bash tests/check.sh --live` also runs `apache2ctl configtest` and `certbot renew --dry-run`
 
 ### Changed
 - Installer no longer clones hblink3 only to obtain compose — it copies `docker-compose.yml` from the installer tree

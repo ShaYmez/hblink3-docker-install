@@ -12,37 +12,130 @@
 #   the Free Software Foundation; either version 3 of the License, or
 #   (at your option) any later version.
 
-if [ "$EUID" -ne 0 ]; then
-        echo ""
-        echo "You Must be root to run this script!!"
-        exit 1
-fi
-
 usage() {
         cat << 'EOF'
-Usage: hblink-ssl <fqdn> <email>
+Usage: hblink-ssl [--dry-run] <fqdn> <email>
 
 Obtain a Let's Encrypt certificate for the dashboard (Apache) and put TLS
 in front of the HBMon websocket so HTTPS pages can use wss://fqdn:9000.
 
+  --dry-run   Print what would change (compose bind, WSS vhost). No apt,
+              certbot, Apache, or docker mutations.
+
 Example:
   hblink-ssl hblink.freestar.network shane@freestar.network
+  hblink-ssl --dry-run hblink.example.test ops@example.test
 EOF
 }
 
-FQDN="${1:-}"
-EMAIL="${2:-}"
-if [ -z "$FQDN" ] || [ -z "$EMAIL" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+DRY_RUN=0
+FQDN=""
+EMAIL=""
+for raw in "$@"; do
+        arg=$(printf '%s' "$raw" | tr -d '\r')
+        case "$arg" in
+                -h|--help) usage; exit 0 ;;
+                --dry-run) DRY_RUN=1 ;;
+                *)
+                        if [ -z "$FQDN" ]; then
+                                FQDN="$arg"
+                        elif [ -z "$EMAIL" ]; then
+                                EMAIL="$arg"
+                        else
+                                echo "Unknown extra argument: $arg"
+                                usage
+                                exit 1
+                        fi
+                        ;;
+        esac
+done
+
+if [ -z "$FQDN" ] || [ -z "$EMAIL" ]; then
         usage
         exit 1
 fi
 
 HBDIR=/etc/hblink3
 COMPOSE="${HBDIR}/docker-compose.yml"
-INSTALLER_PATH=$(cat "${HBDIR}/.installer_path" 2>/dev/null || echo "/opt/hblink3-docker-install")
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+if [ -f "${HBDIR}/.installer_path" ]; then
+        INSTALLER_PATH=$(cat "${HBDIR}/.installer_path")
+elif [ -f "${SCRIPT_DIR}/../../docker-compose.yml" ]; then
+        INSTALLER_PATH=$(cd "${SCRIPT_DIR}/../.." && pwd)
+else
+        INSTALLER_PATH=/opt/hblink3-docker-install
+fi
 WSS_SRC="${INSTALLER_PATH}/files/apache-hblink-wss.conf"
 WSS_DST=/etc/apache2/sites-available/hblink-wss.conf
 SITE=/etc/apache2/sites-available/000-default.conf
+REPO_COMPOSE="${INSTALLER_PATH}/docker-compose.yml"
+
+PYTHON=""
+for cand in python3 python; do
+        command -v "$cand" >/dev/null 2>&1 || continue
+        exe=$("$cand" -c 'import sys; print(sys.executable)' 2>/dev/null) || continue
+        case "$exe" in
+                *WindowsApps*) continue ;;
+        esac
+        if "$cand" -c 'import pathlib' >/dev/null 2>&1; then
+                PYTHON="$cand"
+                break
+        fi
+done
+if [ -z "$PYTHON" ]; then
+        echo "ERROR: python3 is required"
+        exit 1
+fi
+
+preview_compose() {
+        local src="$1"
+        "$PYTHON" - "$src" << 'PY'
+import pathlib, sys
+p = pathlib.Path(sys.argv[1])
+text = p.read_text()
+old = "      - '9000:9000'"
+new = "      - '127.0.0.1:9001:9000'"
+if new in text:
+    print("compose already binds hbmon to 127.0.0.1:9001")
+elif old in text:
+    print("compose would bind hbmon as 127.0.0.1:9001:9000")
+else:
+    raise SystemExit("could not find hbmon 9000:9000 port mapping in docker-compose.yml")
+PY
+}
+
+if [ "$DRY_RUN" -eq 1 ]; then
+        echo "DRY RUN — no apt, certbot, Apache, or docker changes"
+        echo "FQDN:  ${FQDN}"
+        echo "Email: ${EMAIL}"
+        if [ -f "$COMPOSE" ]; then
+                preview_compose "$COMPOSE"
+        elif [ -f "$REPO_COMPOSE" ]; then
+                preview_compose "$REPO_COMPOSE"
+        else
+                echo "WARNING: no docker-compose.yml found to preview"
+        fi
+        if [ ! -f "$WSS_SRC" ]; then
+                echo "ERROR: ${WSS_SRC} not found"
+                exit 1
+        fi
+        echo "---- rendered ${WSS_DST} ----"
+        sed "s/__FQDN__/${FQDN}/g" "$WSS_SRC"
+        if sed "s/__FQDN__/${FQDN}/g" "$WSS_SRC" | grep -q '__FQDN__'; then
+                echo "ERROR: leftover __FQDN__ placeholder"
+                exit 1
+        fi
+        echo "Would: apt-get install certbot python3-certbot-apache"
+        echo "Would: certbot --apache -d ${FQDN} --agree-tos -m ${EMAIL} --redirect"
+        echo "Would: docker compose up -d after rebinding hbmon to 127.0.0.1:9001"
+        exit 0
+fi
+
+if [ "$EUID" -ne 0 ]; then
+        echo ""
+        echo "You Must be root to run this script!!"
+        exit 1
+fi
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
@@ -78,7 +171,7 @@ if [ ! -f "$COMPOSE" ]; then
         exit 1
 fi
 
-python3 - "$COMPOSE" << 'PY'
+"$PYTHON" - "$COMPOSE" << 'PY'
 import pathlib, sys
 p = pathlib.Path(sys.argv[1])
 text = p.read_text()

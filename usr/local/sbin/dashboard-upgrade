@@ -15,7 +15,7 @@
 
 usage() {
         cat << 'EOF'
-Usage: hblink-dashboard-upgrade [--keep-pages|--all]
+Usage: hblink-dashboard-upgrade [--keep-pages|--all|--help]
 
 Refresh /var/www/html from /opt/HBMonv2 (git pull first).
 
@@ -38,14 +38,11 @@ Default:
 
   --update-pages
       Accepted for compatibility; same as default.
+
+  --help
+      Show this text and exit (no root required).
 EOF
 }
-
-if [ "$EUID" -ne 0 ]; then
-        echo ""
-        echo "You Must be root to run this script!!"
-        exit 1
-fi
 
 KEEP_PAGES=0
 RESET_BRANDING=0
@@ -55,6 +52,12 @@ for arg in "$@"; do
                 --all) RESET_BRANDING=1; KEEP_PAGES=0 ;;
                 --update-pages) KEEP_PAGES=0 ;;
                 -h|--help) usage; exit 0 ;;
+                --dry-run)
+                        echo "DRY RUN: dashboard-upgrade would git pull /opt/HBMonv2 and copy HTML."
+                        echo "Default keeps include/config.php, buttons.html, and existing img/."
+                        echo "This mode does not copy files."
+                        exit 0
+                        ;;
                 *)
                         echo "Unknown option: $arg"
                         usage
@@ -62,6 +65,12 @@ for arg in "$@"; do
                         ;;
         esac
 done
+
+if [ "$EUID" -ne 0 ]; then
+        echo ""
+        echo "You Must be root to run this script!!"
+        exit 1
+fi
 
 HBDIR=/etc/hblink3
 HBMONDIR=/opt/HBMonv2

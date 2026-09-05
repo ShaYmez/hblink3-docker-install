@@ -236,6 +236,17 @@ hblink-ssl hblink.freestar.network shane@freestar.network
 
 That issues a cert for the FQDN, redirects HTTP to HTTPS, and puts TLS on the HBMon websocket (`wss://fqdn:9000`). Port 80 must already reach Apache (HTTP-01).
 
+Preview without changing the box:
+
+```sh
+hblink-ssl --dry-run hblink.freestar.network shane@freestar.network
+bash tests/check.sh
+# on an installed server:
+bash tests/check.sh --live
+```
+
+GitHub Actions runs `tests/check.sh` on push and pull request.
+
 ## Ports to forward
 ```sh
 http 80/tcp

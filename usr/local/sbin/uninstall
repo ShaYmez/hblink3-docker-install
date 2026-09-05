@@ -17,6 +17,35 @@
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
 
+usage() {
+        cat << 'EOF'
+Usage: hblink-uninstall [--dry-run|--help]
+
+Remove HBlink3 Docker install files, containers, and control scripts.
+Does not remove Docker, Apache, or PHP packages.
+
+  --dry-run   Print what would be removed and exit.
+  --help      Show this text.
+EOF
+}
+
+arg1=$(printf '%s' "${1:-}" | tr -d '\r')
+case "$arg1" in
+        -h|--help) usage; exit 0 ;;
+        --dry-run)
+        echo "DRY RUN — uninstall would:"
+        echo "  stop docker compose in /etc/hblink3"
+        echo "  remove containers/images named hblink or hbmon"
+        echo "  remove leftover hbmon.service and /etc/cron.daily/lastheard"
+        echo "  remove /usr/local/sbin/hblink-*"
+        echo "  backup /etc/hblink3 to /root/hblink3-backup-<timestamp>"
+        echo "  remove /etc/hblink3 /opt/HBMonv2 /var/log/hblink /var/log/hbmon"
+        echo "  remove dashboard HTML under /var/www/html and hblink-json Apache conf"
+        echo "Docker, Apache2, and PHP packages would be left installed."
+        exit 0
+        ;;
+esac
+
 # Root check
 if [ "$EUID" -ne 0 ];
 then
@@ -138,6 +167,7 @@ rm -f /usr/local/sbin/hblink-update
 rm -f /usr/local/sbin/hblink-upgrade
 rm -f /usr/local/sbin/hblink-dashboard-upgrade
 rm -f /usr/local/sbin/hblink-tgmanager-user
+rm -f /usr/local/sbin/hblink-ssl
 rm -f /usr/local/sbin/hblink-stop
 rm -f /usr/local/sbin/hblink-start
 rm -f /usr/local/sbin/hblink-restart
