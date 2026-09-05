@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# HBLINK3 DOCKER CONTROL SCRIPTS V2.0
+# Version 1.5.1 (14122024)
+# Obtain a Let's Encrypt cert for the Apache dashboard and terminate
+# WSS on port 9000 in front of the hbmon container.
+
+#   Copyright (C) 2020-2026 Shane P. Daley  M0VUB <shane@freestar.network>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 3 of the License, or
+#   (at your option) any later version.
+
+if [ "$EUID" -ne 0 ]; then
+        echo ""
+        echo "You Must be root to run this script!!"
+        exit 1
+fi
+
+usage() {
+        cat << 'EOF'
+Usage: hblink-ssl <fqdn> <email>
+
+Obtain a Let's Encrypt certificate for the dashboard (Apache) and put TLS
+in front of the HBMon websocket so HTTPS pages can use wss://fqdn:9000.
+
+Example:
+  hblink-ssl hblink.freestar.network shane@freestar.network
+EOF
+}
+
+FQDN="${1:-}"
+EMAIL="${2:-}"
+if [ -z "$FQDN" ] || [ -z "$EMAIL" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+        usage
+        exit 1
+fi
+
+HBDIR=/etc/hblink3
+COMPOSE="${HBDIR}/docker-compose.yml"
+INSTALLER_PATH=$(cat "${HBDIR}/.installer_path" 2>/dev/null || echo "/opt/hblink3-docker-install")
+WSS_SRC="${INSTALLER_PATH}/files/apache-hblink-wss.conf"
+WSS_DST=/etc/apache2/sites-available/hblink-wss.conf
+SITE=/etc/apache2/sites-available/000-default.conf
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y certbot python3-certbot-apache
+
+a2enmod ssl rewrite headers proxy proxy_http proxy_wstunnel
+
+if [ -f "$SITE" ]; then
+        if grep -qE '^[[:space:]]*#?[[:space:]]*ServerName ' "$SITE"; then
+                sed -i -E "s|^[[:space:]]*#?[[:space:]]*ServerName .*|	ServerName ${FQDN}|" "$SITE"
+        else
+                sed -i "s|<VirtualHost \*:80>|<VirtualHost *:80>\n	ServerName ${FQDN}|" "$SITE"
+        fi
+fi
+
+apache2ctl configtest
+systemctl reload apache2
+
+if [ ! -d "/etc/letsencrypt/live/${FQDN}" ]; then
+        certbot --apache -d "$FQDN" --non-interactive --agree-tos -m "$EMAIL" --redirect
+else
+        echo "Existing certificate found for ${FQDN}"
+        certbot install --apache -d "$FQDN" --non-interactive --reinstall --redirect || true
+fi
+
+if [ ! -d "/etc/letsencrypt/live/${FQDN}" ]; then
+        echo "ERROR: certificate was not issued for ${FQDN}"
+        exit 1
+fi
+
+if [ ! -f "$COMPOSE" ]; then
+        echo "ERROR: ${COMPOSE} not found"
+        exit 1
+fi
+
+python3 - "$COMPOSE" << 'PY'
+import pathlib, sys
+p = pathlib.Path(sys.argv[1])
+text = p.read_text()
+old = "      - '9000:9000'"
+new = "      - '127.0.0.1:9001:9000'"
+if new in text:
+    print("compose already binds hbmon to 127.0.0.1:9001")
+elif old in text:
+    p.write_text(text.replace(old, new, 1))
+    print("compose: hbmon published as 127.0.0.1:9001")
+else:
+    raise SystemExit("could not find hbmon 9000:9000 port mapping in docker-compose.yml")
+PY
+
+cd "$HBDIR"
+docker compose up -d
+
+if [ ! -f "$WSS_SRC" ]; then
+        echo "ERROR: ${WSS_SRC} not found"
+        exit 1
+fi
+sed "s/__FQDN__/${FQDN}/g" "$WSS_SRC" > "$WSS_DST"
+a2ensite hblink-wss.conf
+apache2ctl configtest
+systemctl reload apache2
+
+echo ""
+echo "HTTPS dashboard: https://${FQDN}/"
+echo "WSS (HBMon):     wss://${FQDN}:9000"
+echo "HTTP redirects to HTTPS. hbmon is localhost:9001 behind Apache."
+exit 0

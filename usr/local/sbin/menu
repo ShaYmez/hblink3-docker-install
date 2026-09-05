@@ -54,10 +54,11 @@ done
 
 dashboard_menu() {
 while : ; do
-opt=$(whiptail --title "HBlink3 — Dashboard" --menu "Talkgroup Manager login and HTML refresh." 16 64 6 \
+opt=$(whiptail --title "HBlink3 — Dashboard" --menu "Talkgroup Manager login and HTML refresh." 18 64 7 \
 1 " Talkgroup Manager User " \
 2 " Upgrade Dashboard HTML " \
 3 " Sync Dashboard (incl. menu / branding) " \
+4 " Enable HTTPS (Let's Encrypt) " \
 b " Back " 3>&1 1>&2 2>&3) || return
 case $opt in
 1) sudo /usr/local/sbin/hblink-tgmanager-user ;;
@@ -66,6 +67,11 @@ case $opt in
         if whiptail --title "Sync Dashboard" --yesno "Replace buttons.html and include/config.php from HBMonv2 as well as pages/CSS.\n\nLogos under img/ are kept. A backup is written first.\n\nContinue?" 14 64; then
                 sudo /usr/local/sbin/hblink-dashboard-upgrade --all
         fi
+        ;;
+4)
+        fqdn=$(whiptail --title "Enable HTTPS" --inputbox "Fully qualified domain name:" 8 64 hblink.freestar.network 3>&1 1>&2 2>&3) || continue
+        email=$(whiptail --title "Enable HTTPS" --inputbox "Let's Encrypt email:" 8 64 shane@freestar.network 3>&1 1>&2 2>&3) || continue
+        sudo /usr/local/sbin/hblink-ssl "$fqdn" "$email"
         ;;
 b) return ;;
 esac

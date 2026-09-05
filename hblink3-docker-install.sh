@@ -279,6 +279,7 @@ echo "--------------------------------------------------------------------------
         cp -p upgrade /usr/local/sbin/hblink-upgrade
         cp -p dashboard-upgrade /usr/local/sbin/hblink-dashboard-upgrade
         cp -p tgmanager-user /usr/local/sbin/hblink-tgmanager-user
+        cp -p ssl /usr/local/sbin/hblink-ssl
         cp -p stop /usr/local/sbin/hblink-stop
         cp -p start /usr/local/sbin/hblink-start
         cp -p restart /usr/local/sbin/hblink-restart
@@ -302,6 +303,7 @@ fi
         chmod 755 /usr/local/sbin/hblink-upgrade
         chmod 755 /usr/local/sbin/hblink-dashboard-upgrade
         chmod 755 /usr/local/sbin/hblink-tgmanager-user
+        chmod 755 /usr/local/sbin/hblink-ssl
         chmod 755 /usr/local/sbin/hblink-stop
         chmod 755 /usr/local/sbin/hblink-start
         chmod 755 /usr/local/sbin/hblink-restart

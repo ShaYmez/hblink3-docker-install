@@ -228,6 +228,14 @@ hblink-tgmanager-user
 
 That writes `/etc/hblink3/tgmanager.users`. Then open `/tgmanager.php` (or Talkgroup Info → Login).
 
+HTTPS (Let's Encrypt) from **Dashboard** → **Enable HTTPS**, or:
+
+```sh
+hblink-ssl hblink.freestar.network shane@freestar.network
+```
+
+That issues a cert for the FQDN, redirects HTTP to HTTPS, and puts TLS on the HBMon websocket (`wss://fqdn:9000`). Port 80 must already reach Apache (HTTP-01).
+
 ## Ports to forward
 ```sh
 http 80/tcp
