@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # HBLINK3 DOCKER UNINSTALL SCRIPT V2.0
-# Version 1.5.1 (14122024)
+# Version 1.6.0 (06092026)
 # This script written by Shane Daley M0VUB. 
 # This script gracefully removes HBlink3 installation and all related components.
 

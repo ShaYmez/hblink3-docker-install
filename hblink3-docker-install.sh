@@ -1,6 +1,6 @@
 #!/bin/bash
 # Docker version alpine-3.20
-# Version 1.5.1 (14122024) hblink3-docker-installer
+# Version 1.6.0 (06092026) hblink3-docker-installer
 # Docker upstream repo version 2.0.2
 # Release: Stable Release - HBMonv2 in Docker (same pattern as XPeer / RYMonv3)
 #

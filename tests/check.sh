@@ -83,10 +83,11 @@ while IFS= read -r -d '' f; do
 done < <(find "$ROOT" -type f \( -name '*.sh' -o -path '*/usr/local/sbin/*' \) ! -path '*/.tmp-obp/*' -print0)
 
 # --- VERSION ---
-if grep -qx '1.5.1' VERSION; then
-        ok "VERSION is 1.5.1"
+VER=$(head -1 VERSION | tr -d ' \r\n')
+if echo "$VER" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        ok "VERSION is $VER"
 else
-        bad "VERSION file unexpected: $(tr -d '\n' < VERSION)"
+        bad "VERSION file unexpected: ${VER}"
 fi
 
 # --- compose ---

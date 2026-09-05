@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-06
+
 ### Added
 - **HBMonv2 runs in Docker** on the same compose network as HBlink3 (same pattern as XPeer / RYMonv3)
 - `docker-compose.yml` is now shipped in this repository (copied from local hblink3 and extended with `hbmon`)
@@ -37,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |---------|-------|---------|-------|
 | hblink | `shaymez/hblink3:latest` | 172.16.238.10 | 54000-54099/udp, 62030-62050/udp, 4321/tcp |
 | hbmon | `shaymez/hbmonv2:latest` | 172.16.238.12 | 9000/tcp |
+
+### Release Information
+- Installer version: 1.6.0 (06092026)
+- HBMonv2 dashboard: 2.1.1+ in Docker (`shaymez/hbmonv2:latest`)
+- Debian 11, 12, 13 and Ubuntu 22.04, 24.04 LTS
 
 ## [1.5.1] - 2025-12-14
 
